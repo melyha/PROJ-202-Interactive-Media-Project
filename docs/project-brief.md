@@ -133,16 +133,19 @@ Pixel-style bitmap font for in-game HUD and UI — e.g. **Press Start 2P** (Goog
 ## 10 · Stretch Goals
 
 | **Sound Design** | Background music loop + SFX ---> free assets from freesound.org |
+
 | **Mobile Touch UI** | Mobile touchscreen play — makes the game shareable on phones |
+
 | **Local High Score** | Save player's top score to localStorage — displayed on title screen |
+
 ---
 
 ## 11 · Challenges & Feasibility Considerations
 
-
 | **Asset Sourcing** |  Source a free itch.io asset pack|
 
 | **Deployment Pipeline** | GitHub Pages requires Vite build config — first deploy can surprise | 
+
 ---
 
 ## 12 · Expected Project Timeline & Milestones
