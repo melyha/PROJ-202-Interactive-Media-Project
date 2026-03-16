@@ -25,16 +25,22 @@ Enigma is a browser-based 2D side-scrolling platformer built with Phaser.js 3. P
 
 
 |  **Primary** | Deliver a fully playable browser game with at least one complete level, a working character, enemies, collectibles, and a win/lose condition — shareable via URL. |
+
 |  **Learning** | Front-end deployment using Phaser.js 3 + Vite + GitHub Pages. |
+
 |  **Creative** | Build an original pixel-art world with a cohesive aesthetic and atmosphere |
+
 |  **Portfolio** |
 
 ---
 
 ## 05 · Target Audience
 
-| 👤 **Primary** | Casual gamers aged 15–30 who enjoy retro-style browser games and grew up with 2D platformers. They value instant play (no install) and short-session gameplay (5–15 min per visit). 
-| 👤 **Secondary** | Peers, instructors, and recruiters evaluating this as a portfolio piece. Technical judges assess code quality; creative judges assess visual cohesion and game feel. 
+| 👤 **Primary** | 
+Casual gamers aged 15–30 who enjoy retro-style browser games and grew up with 2D platformers. They value instant play (no install) and short-session gameplay (5–15 min per visit). 
+
+| 👤 **Secondary** | 
+Peers, instructors, and recruiters evaluating this as a portfolio piece. Technical judges assess code quality; creative judges assess visual cohesion and game feel. 
 
 
 ---
@@ -47,7 +53,7 @@ Enigma is a browser-based 2D side-scrolling platformer built with Phaser.js 3. P
 ###  Physics Feel
 
 
-### 🔁 Core Game Loop
+### Core Game Loop
 
 
 ###  Feedback Systems
@@ -58,14 +64,23 @@ Enigma is a browser-based 2D side-scrolling platformer built with Phaser.js 3. P
 ## 07 · Technology & Tools
 
 | **Phaser.js 3** | Primary game engine  |
+
 | **Vite** | Dev server + bundler |
+
 | **JavaScript (ES6+)** | Core language|
+
 | **Tiled Map Editor** | Free tilemap editor |
+
 | **itch.io Free Asset Packs** | Royalty-free pixel art sprites and tilesets |
+
 | **Aseprite** *(optional)* | Pixel art editor|
+
 | **Git + GitHub** | Version control + project documentation |
+
 | **GitHub Pages** | Free static hosting, one command to deploy |
+
 | **VS Code** | Primary IDE (Integrated Development Environment) |
+
 
 ---
 
@@ -82,8 +97,11 @@ Mysterious and slightly eerie — the player character is an unnamed figure in a
 | What We're Drawing From |
 
 | 🟡 **Pac-Man** | Simple but satisfying collect loop; enemies that define the tension of every screen |
+
 | 🗡️ **Dangerous Dave** | Pixel-art platformer feel; pick-up-and-play simplicity; retro charm without explanation |
+
 | 🍄 **Mario & Luigi (NES era)** | Level structure and pacing; enemy design philosophy; the joy of momentum-based movement |
+
 
 ### 🔠 Typography
 Pixel-style bitmap font for in-game HUD and UI — e.g. **Press Start 2P** (Google Fonts). Clean, period-appropriate, no modern sans-serifs inside the game world.
@@ -97,11 +115,17 @@ Pixel-style bitmap font for in-game HUD and UI — e.g. **Press Start 2P** (Goog
 ## 09 · Key Features & Functionality
 
 | **Character Movement** | Smooth left/right movement with gravity, jumping, and collision detection|
+
 | **Tilemap Levels** | At least one levels built |
+
 | **Enemy AI** | Simple .. contact causes damage or death |
+
 | **Collectibles** | Coins or gems scattered through levels |
+
 | **Win / Lose States** | Lose: player takes damage → death animation → respawn. Win: reach end trigger → next level or victory screen |
+
 | **HUD** | Persistent display of score, lives remaining, and current level number |
+
 | **Title & Game Over Screens** | Title screen with start button; game over screen with final score and replay option |
 
 ---
@@ -118,17 +142,17 @@ Pixel-style bitmap font for in-game HUD and UI — e.g. **Press Start 2P** (Goog
 
 | **Asset Sourcing** |  Source a free itch.io asset pack|
 
-| **Deployment Pipeline** ---> | GitHub Pages requires Vite build config — first deploy can surprise | 
+| **Deployment Pipeline** | GitHub Pages requires Vite build config — first deploy can surprise | 
 ---
 
 ## 12 · Expected Project Timeline & Milestones
 
 > Development follows a **backwards planning framework** — built from the finished game back to Day 1.
 
-| 🔧 **Phase 1** — Setup & First Pixel | ---> 
-| Character sprite visible on screen in browser | Vite + Phaser 3 initialized, GitHub repo + README, asset pack downloaded, GitHub Pages |
+| 🔧 **Phase 1** — Setup & First Pixel | 
+Character sprite visible on screen in browser | Vite + Phaser 3 initialized, GitHub repo + README, asset pack downloaded, GitHub Pages |
 
-| ⚙️ **Phase 2** — Physics & Movement | ---> 
+| ⚙️ **Phase 2** — Physics & Movement | 
 
 | 🔁 **Phase 3** — Core Gameplay 
 
