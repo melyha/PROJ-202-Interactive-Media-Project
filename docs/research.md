@@ -90,9 +90,9 @@ Two existing interactive media projects were analyzed to understand what makes b
 | Factor | Dangerous Dave | Pac-Man | Mario & Luigi (NES) | Phaser.js Tutorial | Enigma |
 |---|---|---|---|---|---|
 | Game Type | 2D Platformer | Arcade Maze | 2D Platformer | 2D Platformer | 2D Platformer |
-| Technology | DOS / C | Arcade / JS ports | NES / JS ports | Phaser.js + Three.js | Phaser.js 3 + Vite |
+| Technology | DOS / C | Arcade / JS ports | NES / JS ports | Phaser.js + Three.js | Phaser.js 3 + Vite?? |
 | Original IP | Yes | Yes (Namco) | No (Nintendo) | Tutorial reference | Yes (fully original) |
-| Level Progression | Yes | Speed scaling only | Yes (8 worlds) | Single demo level | Yes (3 levels planned) |
+| Level Progression | Yes | Speed scaling only | Yes (8 worlds) | Single demo level | Yes (1-2 levels planned) |
 | Narrative / World | None | None | Minimal | None | Yes (mysterious world) |
 | Mobile Ready | No | Partial | Partial | No | Stretch goal |
 | Atmosphere | Low | Low | Medium | Medium-High | High (core priority) |
