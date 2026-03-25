@@ -3,7 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Enigma</title>
+      <style>
+    * { margin: 0; padding: 0; }
+    body { background: #0a0a0f; }
+  </style>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+
+
+  <script>
+    // Phaser needs a config object to know basic things
+    const config = {
+      type: Phaser.AUTO,      
+      width: 800,
+      height: 450,
+      backgroundColor: '#0a0a0f',
+
+      // An empty scene just to confirm everything works
+      scene: {
+        create() {
+          this.add.text(100, 200, 'Enigma is alive.', {
+            fontSize: '24px',
+            color: '#8888ff'
+          });
+        }
+      }
+    };
+
+    // This boots the entire game
+    const game = new Phaser.Game(config);
+  </script
+
 </head>
 <body>
     
