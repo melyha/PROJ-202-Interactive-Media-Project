@@ -121,7 +121,7 @@ Mysterious and slightly eerie — the player character is an unnamed figure in a
 
 ###  Mood Board & Inspirations
  
->  **Mood Board (Figma):** *[Link]*
+>  **Mood Board (Figma):** *[Link:(https://www.figma.com/board/GuK1dchEmsjoJae2mgewdA/Proj202-Moodboard?node-id=0-1&t=Di73vAuLZ5fh9HEb-1)]*
  
 
 ###  Inspirations
@@ -191,7 +191,7 @@ These features are only attempted if the core level is complete and polished wit
 
 ## 12 · Project Board & Timeline
  
->  **GitHub Project Board:** *[Link]*
+>  **GitHub Project Board:** *[Link: (https://github.com/melyha/PROJ-202-Interactive-Media-Project/issues)]*
  
 ### Why GitHub Projects?
 GitHub has a built-in kanban-style **Projects** tab that lives directly inside the repository — no separate tool needed. Tasks can be linked to commits and issues, keeping code and planning in one place. It is free and already part of the GitHub workflow this project uses.
