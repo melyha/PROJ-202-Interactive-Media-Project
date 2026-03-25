@@ -72,12 +72,12 @@ Two existing interactive media projects were analyzed to understand what makes b
 ---
 
  
-###  Project 5 — Vibe Coding 2D Games with Phaser.js (2026, YouTube Tutorial)
-> **URL:** youtube.com · **Channel:** Chong-U — AI Oriented Dev · **Type:** Browser-based 2D Platformer · **Tech:** Phaser.js + Three.js
+###  Project 5 — 2D Games with Phaser.js (2026, YouTube Tutorial)
+> **URL:** youtube.com · **Type:** Browser-based 2D Platformer · **Tech:** Phaser.js + Three.js
  
 | Category | Details |
 |---|---|
-|  **What It Is** | A full tutorial walkthrough (53K+ views, Jan 2026) demonstrating how to build a 2D side-scrolling platformer from scratch in a browser using Phaser.js. The tutorial covers project setup in VS Code, Phaser.js game development, and automated game testing with Playwright. The resulting game features a character, tilemapped forest environment, parallax backgrounds, and smooth platformer physics — directly comparable in scope to Enigma. |
+|  **What It Is** | A full tutorial walkthrough demonstrating how to build a 2D side-scrolling platformer from scratch in a browser using Phaser.js. The tutorial covers project setup in VS Code, Phaser.js game development, and automated game testing with Playwright. The resulting game features a character, tilemapped forest environment, parallax backgrounds, and smooth platformer physics — directly comparable in scope to Enigma. |
 |  **Strength 1** | Demonstrates that a visually polished, fully functional Phaser.js platformer is achievable for a solo developer starting from zero. The end result (visible in the thumbnail) has strong visual production value with layered parallax backgrounds and animated sprites. |
 |  **Strength 2** | Covers the exact tech stack Enigma will use — Phaser.js project setup, VS Code workflow, asset integration — making it a directly applicable technical reference. |
 |  **Weakness 1** | Tutorial format means the code follows a specific instructional path — the resulting project is a learning artefact, not a fully scoped original game with its own design identity. |
