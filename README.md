@@ -8,7 +8,7 @@
 
 ##  Play
 
-**Live link coming soon** — will be deployed via GitHub Pages in Phase 1.
+**[▶ Play Enigma](https://melyha.github.io/PROJ-202-Interactive-Media-Project/)**
 
 ---
 
