@@ -1,43 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enigma</title>
-      <style>
-    * { margin: 0; padding: 0; }
-    body { background: #0a0a0f; }
-  </style>
 
-  
+<head>
+  <meta charset="utf-8" />
+  <title>Enigma</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #0a0a0f;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+  </style>
+</head>
+
+<body>
+
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 
-
   <script>
-    // Phaser needs a config object to know basic things
     const config = {
-      type: Phaser.AUTO,      
+      type: Phaser.AUTO,
       width: 800,
       height: 450,
       backgroundColor: '#0a0a0f',
-
-      // An empty scene just to confirm everything works
-      scene: {
-        create() {
-          this.add.text(100, 200, 'Enigma is alive.', {
-            fontSize: '24px',
-            color: '#8888ff'
-          });
+      scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+      },
+      physics: {
+        default: 'arcade',
+        arcade: {
+          gravity: { y: 600 },
+          debug: false
         }
+      },
+      scene: {
+        preload,
+        create,
+        update
       }
     };
 
-    // This boots the entire game
     const game = new Phaser.Game(config);
-  </script
 
-</head>
-<body>
-    
+    // ── VARIABLES ──────────────────────────────────────────
+    let player;
+    let platforms;
+    let cursors;
+
+    // ── PRELOAD — runs once, loads all assets ──────────────
+    function preload() {
+
+      // Background
+      this.load.image('bg', 'assets/backgrounds/background_color_hills.png');
+
+      // Player frames — individual PNGs from Kenney pack
+      this.load.image('idle', 'assets/sprites/character/character_beige_idle.png');
+      this.load.image('walk_a', 'assets/sprites/character/character_beige_walk_a.png');
+      this.load.image('walk_b', 'assets/sprites/character/character_beige_walk_b.png');
+      this.load.image('jump', 'assets/sprites/character/character_beige_jump.png');
+    }
+
+    // ── CREATE — runs once after preload, builds the scene ─
+    function create() {
+
+      // Background — stretched to fill canvas
+      this.add.image(400, 225, 'bg').setDisplaySize(800, 450);
+
+      // Platform group — static means it doesn't move or fall
+      platforms = this.physics.add.staticGroup();
+
+      // Ground — invisible rectangle at the bottom of the screen
+      // We'll replace this with real tiles in Phase 2
+      const ground = this.add.rectangle(400, 440, 800, 20, 0x000000, 0);
+      this.physics.add.existing(ground, true); // true = static body
+      platforms.add(ground);
+
+      // Player — starts at left side, above the ground
+      player = this.physics.add.sprite(100, 350, 'idle');
+      player.setCollideWorldBounds(true); // stops player walking off screen edges
+
+      // Collider — makes player land on platforms instead of falling through
+      this.physics.add.collider(player, platforms);
+
+      // Keyboard input
+      cursors = this.input.keyboard.createCursorKeys();
+    }
+
+    // ── UPDATE — runs every frame (60fps) ──────────────────
+    function update() {
+      const onGround = player.body.blocked.down;
+
+      // Left / Right movement
+      if (cursors.left.isDown) {
+        player.setVelocityX(-220);
+        player.setFlipX(true);             // flip sprite to face left
+        player.setTexture(onGround ? 'walk_a' : 'jump');
+
+      } else if (cursors.right.isDown) {
+        player.setVelocityX(220);
+        player.setFlipX(false);
+        player.setTexture(onGround ? 'walk_a' : 'jump');
+
+      } else {
+        player.setVelocityX(0);
+        player.setTexture(onGround ? 'idle' : 'jump');
+      }
+
+      // Jump — only if standing on ground
+      if (cursors.up.isDown && onGround) {
+        player.setVelocityY(-520);
+      }
+
+      // Simple walk animation — alternate between walk_a and walk_b
+      if (player.body.velocity.x !== 0 && onGround) {
+        // Swap texture every 8 frames
+        if (Math.floor(this.time.now / 133) % 2 === 0) {
+          player.setTexture('walk_a');
+        } else {
+          player.setTexture('walk_b');
+        }
+      }
+    }
+  </script>
+
 </body>
+
 </html>
