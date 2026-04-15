@@ -1,0 +1,3993 @@
+{
+  "_meta": {
+    "generated": "2026-04-14",
+    "source": "Kenney New Platformer Pack",
+    "notes": [
+      "key = filename without extension — use directly as this.load.image(key, path)",
+      "character[] uses PNG/Poses/ at 96x128. Each entry has hdPath/hdWidth/hdHeight for 192x256 HD version at PNG/Poses HD/.",
+      "companion[] = character_purple_* sprites — 128x128 px each",
+      "Tilesheet files are now indexed in spritesheets[] — use this.load.spritesheet() with frameWidth/frameHeight from that section.",
+      "PNG/Parts/ and PNG/Parts HD/ excluded — rig-based body parts, not for Phaser frame animation",
+      "All tile and most enemy dimensions confirmed 64x64. Exceptions: bat variants, frog variants, ghost, spider variants."
+    ]
+  },
+  "spritesheets": [
+    {
+      "key": "character_femaleAdventurer_sheet",
+      "path": "assets/sprites/character/Tilesheet/character_femaleAdventurer_sheet.png",
+      "category": "spritesheet",
+      "variant": "femaleAdventurer",
+      "sheetWidth": 864,
+      "sheetHeight": 640,
+      "frameWidth": 96,
+      "frameHeight": 128,
+      "cols": 9,
+      "rows": 5,
+      "totalFrames": 45,
+      "spacing": 0,
+      "margin": 0,
+      "hdKey": "character_femaleAdventurer_sheetHD",
+      "hdPath": "assets/sprites/character/Tilesheet/character_femaleAdventurer_sheetHD.png",
+      "hdSheetWidth": 1728,
+      "hdSheetHeight": 1280,
+      "hdFrameWidth": 192,
+      "hdFrameHeight": 256,
+      "notes": "Load with this.load.spritesheet(key, path, { frameWidth: 96, frameHeight: 128 }). Frame indices are 0-based, left-to-right, top-to-bottom. An XML atlas (character_femaleAdventurer_sheet.xml) exists alongside the PNG if you prefer atlas loading.",
+      "frameNames": [
+        "idle", "jump", "fall", "duck", "hit", "climb0", "climb1", "cheer0", "cheer1",
+        "back", "slide", "interact", "switch0", "switch1", "kick", "side", "shove", "shoveBack",
+        "talk", "attackKick", "hang", "hold", "show", "behindBack", "run0", "run1", "run2",
+        "attack0", "attack1", "attack2", "think", "down", "drag", "hurt", "wide", "rope",
+        "walk0", "walk1", "walk2", "walk3", "walk4", "walk5", "walk6", "walk7", "fallDown"
+      ],
+      "animGroups": {
+        "idle":       { "frames": [0],                           "note": "standing still" },
+        "jump":       { "frames": [1],                           "note": "in-air / airborne" },
+        "fall":       { "frames": [2],                           "note": "falling downward" },
+        "fallDown":   { "frames": [44],                          "note": "falling forward / knocked down" },
+        "duck":       { "frames": [3],                           "note": "crouch / duck" },
+        "hit":        { "frames": [4],                           "note": "damage flash frame" },
+        "hurt":       { "frames": [33],                          "note": "injury recoil" },
+        "climb":      { "frames": [5, 6],                        "note": "ladder climb A→B loop" },
+        "cheer":      { "frames": [7, 8],                        "note": "celebration A→B loop" },
+        "run":        { "frames": [24, 25, 26],                  "note": "3-frame run cycle" },
+        "walk":       { "frames": [36, 37, 38, 39, 40, 41, 42, 43], "note": "8-frame walk cycle" },
+        "attack":     { "frames": [27, 28, 29],                  "note": "3-frame melee combo" },
+        "attackKick": { "frames": [19],                          "note": "kick attack" },
+        "kick":       { "frames": [14],                          "note": "standing kick" },
+        "shove":      { "frames": [16, 17],                      "note": "push A→B" },
+        "slide":      { "frames": [10],                          "note": "sliding / skid" },
+        "hang":       { "frames": [20],                          "note": "hanging from ledge" },
+        "rope":       { "frames": [35],                          "note": "rope / swing hold" },
+        "interact":   { "frames": [11],                          "note": "picking up / pressing" },
+        "hold":       { "frames": [21],                          "note": "holding an object" },
+        "switch":     { "frames": [12, 13],                      "note": "lever/switch animation" },
+        "talk":       { "frames": [18],                          "note": "dialogue pose" },
+        "think":      { "frames": [30],                          "note": "thinking pose" },
+        "show":       { "frames": [22],                          "note": "show / point pose" },
+        "side":       { "frames": [15],                          "note": "side-facing static" },
+        "back":       { "frames": [9],                           "note": "back-facing static" },
+        "wide":       { "frames": [34],                          "note": "wide-stance pose" },
+        "behindBack": { "frames": [23],                          "note": "hands behind back" },
+        "down":       { "frames": [31],                          "note": "looking down" },
+        "drag":       { "frames": [32],                          "note": "dragging something" }
+      }
+    }
+  ],
+  "backgrounds": [
+    {
+      "key": "background_clouds",
+      "path": "assets/backgrounds/background_clouds.png",
+      "width": 256,
+      "height": 256,
+      "category": "background"
+    },
+    {
+      "key": "background_color_desert",
+      "path": "assets/backgrounds/background_color_desert.png",
+      "width": 256,
+      "height": 256,
+      "category": "background"
+    },
+    {
+      "key": "background_color_hills",
+      "path": "assets/backgrounds/background_color_hills.png",
+      "width": 256,
+      "height": 256,
+      "category": "background",
+      "notes": "Currently used in index.html"
+    },
+    {
+      "key": "background_color_mushrooms",
+      "path": "assets/backgrounds/background_color_mushrooms.png",
+      "width": 256,
+      "height": 256,
+      "category": "background"
+    },
+    {
+      "key": "background_color_trees",
+      "path": "assets/backgrounds/background_color_trees.png",
+      "width": 256,
+      "height": 256,
+      "category": "background"
+    },
+    {
+      "key": "background_fade_desert",
+      "path": "assets/backgrounds/background_fade_desert.png",
+      "width": 256,
+      "height": 256,
+      "category": "background",
+      "notes": "Fade-to-transparent bottom edge"
+    },
+    {
+      "key": "background_fade_hills",
+      "path": "assets/backgrounds/background_fade_hills.png",
+      "width": 256,
+      "height": 256,
+      "category": "background",
+      "notes": "Fade-to-transparent bottom edge"
+    },
+    {
+      "key": "background_fade_mushrooms",
+      "path": "assets/backgrounds/background_fade_mushrooms.png",
+      "width": 256,
+      "height": 256,
+      "category": "background",
+      "notes": "Fade-to-transparent bottom edge"
+    },
+    {
+      "key": "background_fade_trees",
+      "path": "assets/backgrounds/background_fade_trees.png",
+      "width": 256,
+      "height": 256,
+      "category": "background",
+      "notes": "Fade-to-transparent bottom edge"
+    },
+    {
+      "key": "background_solid_cloud",
+      "path": "assets/backgrounds/background_solid_cloud.png",
+      "width": 256,
+      "height": 256,
+      "category": "background",
+      "notes": "Solid fill tile — repeatable for parallax layers"
+    },
+    {
+      "key": "background_solid_dirt",
+      "path": "assets/backgrounds/background_solid_dirt.png",
+      "width": 256,
+      "height": 256,
+      "category": "background",
+      "notes": "Solid fill tile — repeatable for parallax layers"
+    },
+    {
+      "key": "background_solid_grass",
+      "path": "assets/backgrounds/background_solid_grass.png",
+      "width": 256,
+      "height": 256,
+      "category": "background",
+      "notes": "Solid fill tile — repeatable for parallax layers"
+    },
+    {
+      "key": "background_solid_sand",
+      "path": "assets/backgrounds/background_solid_sand.png",
+      "width": 256,
+      "height": 256,
+      "category": "background",
+      "notes": "Solid fill tile — repeatable for parallax layers"
+    },
+    {
+      "key": "background_solid_sky",
+      "path": "assets/backgrounds/background_solid_sky.png",
+      "width": 256,
+      "height": 256,
+      "category": "background",
+      "notes": "Solid fill tile — repeatable for parallax layers"
+    }
+  ],
+  "character": [
+    {
+      "key": "character_femaleAdventurer_attack0",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_attack0.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "attack0",
+      "animGroup": "attack",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_attack0.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_attack1",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_attack1.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "attack1",
+      "animGroup": "attack",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_attack1.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_attack2",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_attack2.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "attack2",
+      "animGroup": "attack",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_attack2.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_attackKick",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_attackKick.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "attackKick",
+      "animGroup": "attack",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_attackKick.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_back",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_back.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "back",
+      "animGroup": "pose",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_back.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_behindBack",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_behindBack.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "behindBack",
+      "animGroup": "pose",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_behindBack.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_cheer0",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_cheer0.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "cheer0",
+      "animGroup": "cheer",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_cheer0.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_cheer1",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_cheer1.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "cheer1",
+      "animGroup": "cheer",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_cheer1.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_climb0",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_climb0.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "climb0",
+      "animGroup": "climb",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_climb0.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_climb1",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_climb1.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "climb1",
+      "animGroup": "climb",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_climb1.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_down",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_down.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "down",
+      "animGroup": "pose",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_down.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_drag",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_drag.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "drag",
+      "animGroup": "pose",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_drag.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_duck",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_duck.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "duck",
+      "animGroup": "duck",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_duck.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_fall",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_fall.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "fall",
+      "animGroup": "fall",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_fall.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_fallDown",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_fallDown.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "fallDown",
+      "animGroup": "fall",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_fallDown.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_hang",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_hang.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "hang",
+      "animGroup": "hang",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_hang.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_hit",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_hit.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "hit",
+      "animGroup": "hurt",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_hit.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_hold",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_hold.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "hold",
+      "animGroup": "interact",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_hold.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_hurt",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_hurt.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "hurt",
+      "animGroup": "hurt",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_hurt.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_idle",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_idle.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "idle",
+      "animGroup": "idle",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_idle.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_interact",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_interact.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "interact",
+      "animGroup": "interact",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_interact.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_jump",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_jump.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "jump",
+      "animGroup": "jump",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_jump.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_kick",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_kick.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "kick",
+      "animGroup": "attack",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_kick.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_rope",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_rope.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "rope",
+      "animGroup": "rope",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_rope.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_run0",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_run0.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "run0",
+      "animGroup": "run",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_run0.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_run1",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_run1.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "run1",
+      "animGroup": "run",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_run1.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_run2",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_run2.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "run2",
+      "animGroup": "run",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_run2.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_shove",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_shove.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "shove",
+      "animGroup": "attack",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_shove.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_shoveBack",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_shoveBack.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "shoveBack",
+      "animGroup": "attack",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_shoveBack.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_show",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_show.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "show",
+      "animGroup": "pose",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_show.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_side",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_side.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "side",
+      "animGroup": "pose",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_side.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_slide",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_slide.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "slide",
+      "animGroup": "slide",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_slide.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_switch0",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_switch0.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "switch0",
+      "animGroup": "switch",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_switch0.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_switch1",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_switch1.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "switch1",
+      "animGroup": "switch",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_switch1.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_talk",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_talk.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "talk",
+      "animGroup": "talk",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_talk.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_think",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_think.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "think",
+      "animGroup": "think",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_think.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_walk0",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_walk0.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "walk0",
+      "animGroup": "walk",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_walk0.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_walk1",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_walk1.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "walk1",
+      "animGroup": "walk",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_walk1.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_walk2",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_walk2.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "walk2",
+      "animGroup": "walk",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_walk2.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_walk3",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_walk3.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "walk3",
+      "animGroup": "walk",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_walk3.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_walk4",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_walk4.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "walk4",
+      "animGroup": "walk",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_walk4.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_walk5",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_walk5.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "walk5",
+      "animGroup": "walk",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_walk5.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_walk6",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_walk6.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "walk6",
+      "animGroup": "walk",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_walk6.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_walk7",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_walk7.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "walk7",
+      "animGroup": "walk",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_walk7.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    },
+    {
+      "key": "character_femaleAdventurer_wide",
+      "path": "assets/sprites/character/PNG/Poses/character_femaleAdventurer_wide.png",
+      "width": 96,
+      "height": 128,
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "wide",
+      "animGroup": "pose",
+      "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_wide.png",
+      "hdWidth": 192,
+      "hdHeight": 256
+    }
+  ],
+  "companion": [
+    {
+      "key": "character_purple_climb_a",
+      "path": "assets/sprites/companion/character_purple_climb_a.png",
+      "width": 128,
+      "height": 128,
+      "category": "companion",
+      "animGroup": "climb",
+      "notes": "Ladder climb frame A"
+    },
+    {
+      "key": "character_purple_climb_b",
+      "path": "assets/sprites/companion/character_purple_climb_b.png",
+      "width": 128,
+      "height": 128,
+      "category": "companion",
+      "animGroup": "climb",
+      "notes": "Ladder climb frame B"
+    },
+    {
+      "key": "character_purple_duck",
+      "path": "assets/sprites/companion/character_purple_duck.png",
+      "width": 128,
+      "height": 128,
+      "category": "companion",
+      "animGroup": "duck",
+      "notes": "Crouch / duck"
+    },
+    {
+      "key": "character_purple_front",
+      "path": "assets/sprites/companion/character_purple_front.png",
+      "width": 128,
+      "height": 128,
+      "category": "companion",
+      "animGroup": "pose",
+      "notes": "Front-facing pose (cutscene / UI use)"
+    },
+    {
+      "key": "character_purple_hit",
+      "path": "assets/sprites/companion/character_purple_hit.png",
+      "width": 128,
+      "height": 128,
+      "category": "companion",
+      "animGroup": "hurt",
+      "notes": "Damage flash frame — use for invincibility flicker"
+    },
+    {
+      "key": "character_purple_idle",
+      "path": "assets/sprites/companion/character_purple_idle.png",
+      "width": 128,
+      "height": 128,
+      "category": "companion",
+      "animGroup": "idle",
+      "notes": "Standing still"
+    },
+    {
+      "key": "character_purple_jump",
+      "path": "assets/sprites/companion/character_purple_jump.png",
+      "width": 128,
+      "height": 128,
+      "category": "companion",
+      "animGroup": "jump",
+      "notes": "In-air / airborne"
+    },
+    {
+      "key": "character_purple_walk_a",
+      "path": "assets/sprites/companion/character_purple_walk_a.png",
+      "width": 128,
+      "height": 128,
+      "category": "companion",
+      "animGroup": "walk",
+      "notes": "Walk cycle frame A"
+    },
+    {
+      "key": "character_purple_walk_b",
+      "path": "assets/sprites/companion/character_purple_walk_b.png",
+      "width": 128,
+      "height": 128,
+      "category": "companion",
+      "animGroup": "walk",
+      "notes": "Walk cycle frame B — alternate with walk_a every ~133ms"
+    }
+  ],
+  "enemy": [
+    {
+      "key": "barnacle_attack_a",
+      "path": "assets/sprites/enemy/barnacle_attack_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "attack"
+    },
+    {
+      "key": "barnacle_attack_b",
+      "path": "assets/sprites/enemy/barnacle_attack_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "attack"
+    },
+    {
+      "key": "barnacle_attack_rest",
+      "path": "assets/sprites/enemy/barnacle_attack_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "bat",
+      "path": "assets/sprites/enemy/bat.png",
+      "width": 70,
+      "height": 47,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "bat_dead",
+      "path": "assets/sprites/enemy/bat_dead.png",
+      "width": 70,
+      "height": 47,
+      "category": "enemy",
+      "animGroup": "dead"
+    },
+    {
+      "key": "bat_fly",
+      "path": "assets/sprites/enemy/bat_fly.png",
+      "width": 88,
+      "height": 37,
+      "category": "enemy",
+      "animGroup": "fly"
+    },
+    {
+      "key": "bat_hang",
+      "path": "assets/sprites/enemy/bat_hang.png",
+      "width": 38,
+      "height": 48,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "bat_hit",
+      "path": "assets/sprites/enemy/bat_hit.png",
+      "width": 70,
+      "height": 47,
+      "category": "enemy",
+      "animGroup": "hurt"
+    },
+    {
+      "key": "bee_a",
+      "path": "assets/sprites/enemy/bee_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "fly"
+    },
+    {
+      "key": "bee_b",
+      "path": "assets/sprites/enemy/bee_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "fly"
+    },
+    {
+      "key": "bee_rest",
+      "path": "assets/sprites/enemy/bee_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "block_fall",
+      "path": "assets/sprites/enemy/block_fall.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "fall"
+    },
+    {
+      "key": "block_idle",
+      "path": "assets/sprites/enemy/block_idle.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "block_rest",
+      "path": "assets/sprites/enemy/block_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "fish_blue_rest",
+      "path": "assets/sprites/enemy/fish_blue_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "fish_blue_swim_a",
+      "path": "assets/sprites/enemy/fish_blue_swim_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "swim"
+    },
+    {
+      "key": "fish_blue_swim_b",
+      "path": "assets/sprites/enemy/fish_blue_swim_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "swim"
+    },
+    {
+      "key": "fish_purple_down",
+      "path": "assets/sprites/enemy/fish_purple_down.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "swim"
+    },
+    {
+      "key": "fish_purple_rest",
+      "path": "assets/sprites/enemy/fish_purple_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "fish_purple_up",
+      "path": "assets/sprites/enemy/fish_purple_up.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "swim"
+    },
+    {
+      "key": "fish_yellow_rest",
+      "path": "assets/sprites/enemy/fish_yellow_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "fish_yellow_swim_a",
+      "path": "assets/sprites/enemy/fish_yellow_swim_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "swim"
+    },
+    {
+      "key": "fish_yellow_swim_b",
+      "path": "assets/sprites/enemy/fish_yellow_swim_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "swim"
+    },
+    {
+      "key": "fly_a",
+      "path": "assets/sprites/enemy/fly_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "fly"
+    },
+    {
+      "key": "fly_b",
+      "path": "assets/sprites/enemy/fly_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "fly"
+    },
+    {
+      "key": "fly_rest",
+      "path": "assets/sprites/enemy/fly_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "frog",
+      "path": "assets/sprites/enemy/frog.png",
+      "width": 58,
+      "height": 39,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "frog_dead",
+      "path": "assets/sprites/enemy/frog_dead.png",
+      "width": 61,
+      "height": 54,
+      "category": "enemy",
+      "animGroup": "dead"
+    },
+    {
+      "key": "frog_hit",
+      "path": "assets/sprites/enemy/frog_hit.png",
+      "width": 61,
+      "height": 54,
+      "category": "enemy",
+      "animGroup": "hurt"
+    },
+    {
+      "key": "frog_leap",
+      "path": "assets/sprites/enemy/frog_leap.png",
+      "width": 61,
+      "height": 54,
+      "category": "enemy",
+      "animGroup": "jump"
+    },
+    {
+      "key": "ghost",
+      "path": "assets/sprites/enemy/ghost.png",
+      "width": 51,
+      "height": 73,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "ghost_dead",
+      "path": "assets/sprites/enemy/ghost_dead.png",
+      "width": 51,
+      "height": 73,
+      "category": "enemy",
+      "animGroup": "dead"
+    },
+    {
+      "key": "ghost_hit",
+      "path": "assets/sprites/enemy/ghost_hit.png",
+      "width": 51,
+      "height": 73,
+      "category": "enemy",
+      "animGroup": "hurt"
+    },
+    {
+      "key": "ghost_normal",
+      "path": "assets/sprites/enemy/ghost_normal.png",
+      "width": 51,
+      "height": 73,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "ladybug_fly",
+      "path": "assets/sprites/enemy/ladybug_fly.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "fly"
+    },
+    {
+      "key": "ladybug_rest",
+      "path": "assets/sprites/enemy/ladybug_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "ladybug_walk_a",
+      "path": "assets/sprites/enemy/ladybug_walk_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "ladybug_walk_b",
+      "path": "assets/sprites/enemy/ladybug_walk_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "mouse_rest",
+      "path": "assets/sprites/enemy/mouse_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "mouse_walk_a",
+      "path": "assets/sprites/enemy/mouse_walk_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "mouse_walk_b",
+      "path": "assets/sprites/enemy/mouse_walk_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "saw_a",
+      "path": "assets/sprites/enemy/saw_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "spin"
+    },
+    {
+      "key": "saw_b",
+      "path": "assets/sprites/enemy/saw_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "spin"
+    },
+    {
+      "key": "saw_rest",
+      "path": "assets/sprites/enemy/saw_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "slime_block_jump",
+      "path": "assets/sprites/enemy/slime_block_jump.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "jump"
+    },
+    {
+      "key": "slime_block_rest",
+      "path": "assets/sprites/enemy/slime_block_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "slime_block_walk_a",
+      "path": "assets/sprites/enemy/slime_block_walk_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "slime_block_walk_b",
+      "path": "assets/sprites/enemy/slime_block_walk_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "slime_fire_flat",
+      "path": "assets/sprites/enemy/slime_fire_flat.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "dead"
+    },
+    {
+      "key": "slime_fire_rest",
+      "path": "assets/sprites/enemy/slime_fire_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "slime_fire_walk_a",
+      "path": "assets/sprites/enemy/slime_fire_walk_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "slime_fire_walk_b",
+      "path": "assets/sprites/enemy/slime_fire_walk_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "slime_normal_flat",
+      "path": "assets/sprites/enemy/slime_normal_flat.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "dead"
+    },
+    {
+      "key": "slime_normal_rest",
+      "path": "assets/sprites/enemy/slime_normal_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "slime_normal_walk_a",
+      "path": "assets/sprites/enemy/slime_normal_walk_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "slime_normal_walk_b",
+      "path": "assets/sprites/enemy/slime_normal_walk_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "slime_spike_flat",
+      "path": "assets/sprites/enemy/slime_spike_flat.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "dead"
+    },
+    {
+      "key": "slime_spike_rest",
+      "path": "assets/sprites/enemy/slime_spike_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "slime_spike_walk_a",
+      "path": "assets/sprites/enemy/slime_spike_walk_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "slime_spike_walk_b",
+      "path": "assets/sprites/enemy/slime_spike_walk_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "snail_rest",
+      "path": "assets/sprites/enemy/snail_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "snail_shell",
+      "path": "assets/sprites/enemy/snail_shell.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "shell"
+    },
+    {
+      "key": "snail_walk_a",
+      "path": "assets/sprites/enemy/snail_walk_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "snail_walk_b",
+      "path": "assets/sprites/enemy/snail_walk_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "spider",
+      "path": "assets/sprites/enemy/spider.png",
+      "width": 71,
+      "height": 45,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "spider_dead",
+      "path": "assets/sprites/enemy/spider_dead.png",
+      "width": 69,
+      "height": 51,
+      "category": "enemy",
+      "animGroup": "dead"
+    },
+    {
+      "key": "spider_hit",
+      "path": "assets/sprites/enemy/spider_hit.png",
+      "width": 71,
+      "height": 45,
+      "category": "enemy",
+      "animGroup": "hurt"
+    },
+    {
+      "key": "spider_walk1",
+      "path": "assets/sprites/enemy/spider_walk1.png",
+      "width": 72,
+      "height": 51,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "spider_walk2",
+      "path": "assets/sprites/enemy/spider_walk2.png",
+      "width": 77,
+      "height": 53,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "worm_normal_move_a",
+      "path": "assets/sprites/enemy/worm_normal_move_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "worm_normal_move_b",
+      "path": "assets/sprites/enemy/worm_normal_move_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "worm_normal_rest",
+      "path": "assets/sprites/enemy/worm_normal_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    },
+    {
+      "key": "worm_ring_move_a",
+      "path": "assets/sprites/enemy/worm_ring_move_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "worm_ring_move_b",
+      "path": "assets/sprites/enemy/worm_ring_move_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "walk"
+    },
+    {
+      "key": "worm_ring_rest",
+      "path": "assets/sprites/enemy/worm_ring_rest.png",
+      "width": 64,
+      "height": 64,
+      "category": "enemy",
+      "animGroup": "idle"
+    }
+  ],
+  "tiles": [
+    {
+      "key": "block_blue",
+      "path": "assets/sprites/tiles/block_blue.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_coin",
+      "path": "assets/sprites/tiles/block_coin.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_coin_active",
+      "path": "assets/sprites/tiles/block_coin_active.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_empty",
+      "path": "assets/sprites/tiles/block_empty.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_empty_warning",
+      "path": "assets/sprites/tiles/block_empty_warning.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_exclamation",
+      "path": "assets/sprites/tiles/block_exclamation.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_exclamation_active",
+      "path": "assets/sprites/tiles/block_exclamation_active.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_green",
+      "path": "assets/sprites/tiles/block_green.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_plank",
+      "path": "assets/sprites/tiles/block_plank.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_planks",
+      "path": "assets/sprites/tiles/block_planks.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_red",
+      "path": "assets/sprites/tiles/block_red.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_spikes",
+      "path": "assets/sprites/tiles/block_spikes.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hazard"
+    },
+    {
+      "key": "block_strong_coin",
+      "path": "assets/sprites/tiles/block_strong_coin.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_strong_coin_active",
+      "path": "assets/sprites/tiles/block_strong_coin_active.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_strong_danger",
+      "path": "assets/sprites/tiles/block_strong_danger.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_strong_danger_active",
+      "path": "assets/sprites/tiles/block_strong_danger_active.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_strong_empty",
+      "path": "assets/sprites/tiles/block_strong_empty.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_strong_empty_active",
+      "path": "assets/sprites/tiles/block_strong_empty_active.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_strong_exclamation",
+      "path": "assets/sprites/tiles/block_strong_exclamation.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_strong_exclamation_active",
+      "path": "assets/sprites/tiles/block_strong_exclamation_active.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "block_yellow",
+      "path": "assets/sprites/tiles/block_yellow.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "bomb",
+      "path": "assets/sprites/tiles/bomb.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hazard"
+    },
+    {
+      "key": "bomb_active",
+      "path": "assets/sprites/tiles/bomb_active.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hazard"
+    },
+    {
+      "key": "brick_brown",
+      "path": "assets/sprites/tiles/brick_brown.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "brick_brown_diagonal",
+      "path": "assets/sprites/tiles/brick_brown_diagonal.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "brick_grey",
+      "path": "assets/sprites/tiles/brick_grey.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "brick_grey_diagonal",
+      "path": "assets/sprites/tiles/brick_grey_diagonal.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "bricks_brown",
+      "path": "assets/sprites/tiles/bricks_brown.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "bricks_grey",
+      "path": "assets/sprites/tiles/bricks_grey.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "block"
+    },
+    {
+      "key": "bridge",
+      "path": "assets/sprites/tiles/bridge.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "platform"
+    },
+    {
+      "key": "bridge_logs",
+      "path": "assets/sprites/tiles/bridge_logs.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "platform"
+    },
+    {
+      "key": "bush",
+      "path": "assets/sprites/tiles/bush.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "cactus",
+      "path": "assets/sprites/tiles/cactus.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "chain",
+      "path": "assets/sprites/tiles/chain.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "coin_bronze",
+      "path": "assets/sprites/tiles/coin_bronze.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "collectible"
+    },
+    {
+      "key": "coin_bronze_side",
+      "path": "assets/sprites/tiles/coin_bronze_side.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "collectible"
+    },
+    {
+      "key": "coin_gold",
+      "path": "assets/sprites/tiles/coin_gold.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "collectible",
+      "notes": "Primary collectible — recommended for score pickups"
+    },
+    {
+      "key": "coin_gold_side",
+      "path": "assets/sprites/tiles/coin_gold_side.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "collectible"
+    },
+    {
+      "key": "coin_silver",
+      "path": "assets/sprites/tiles/coin_silver.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "collectible"
+    },
+    {
+      "key": "coin_silver_side",
+      "path": "assets/sprites/tiles/coin_silver_side.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "collectible"
+    },
+    {
+      "key": "conveyor",
+      "path": "assets/sprites/tiles/conveyor.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "platform"
+    },
+    {
+      "key": "door_closed",
+      "path": "assets/sprites/tiles/door_closed.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "door_closed_top",
+      "path": "assets/sprites/tiles/door_closed_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "door_open",
+      "path": "assets/sprites/tiles/door_open.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "door_open_top",
+      "path": "assets/sprites/tiles/door_open_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "fence",
+      "path": "assets/sprites/tiles/fence.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "fence_broken",
+      "path": "assets/sprites/tiles/fence_broken.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "fireball",
+      "path": "assets/sprites/tiles/fireball.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hazard",
+      "notes": "Hazard — projectile sprite"
+    },
+    {
+      "key": "flag_blue_a",
+      "path": "assets/sprites/tiles/flag_blue_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "flag_blue_b",
+      "path": "assets/sprites/tiles/flag_blue_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "flag_green_a",
+      "path": "assets/sprites/tiles/flag_green_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "flag_green_b",
+      "path": "assets/sprites/tiles/flag_green_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "flag_off",
+      "path": "assets/sprites/tiles/flag_off.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "flag_red_a",
+      "path": "assets/sprites/tiles/flag_red_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "flag_red_b",
+      "path": "assets/sprites/tiles/flag_red_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "flag_yellow_a",
+      "path": "assets/sprites/tiles/flag_yellow_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "flag_yellow_b",
+      "path": "assets/sprites/tiles/flag_yellow_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "gem_blue",
+      "path": "assets/sprites/tiles/gem_blue.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "collectible"
+    },
+    {
+      "key": "gem_green",
+      "path": "assets/sprites/tiles/gem_green.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "collectible"
+    },
+    {
+      "key": "gem_red",
+      "path": "assets/sprites/tiles/gem_red.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "collectible"
+    },
+    {
+      "key": "gem_yellow",
+      "path": "assets/sprites/tiles/gem_yellow.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "collectible"
+    },
+    {
+      "key": "grass",
+      "path": "assets/sprites/tiles/grass.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "grass_purple",
+      "path": "assets/sprites/tiles/grass_purple.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "heart",
+      "path": "assets/sprites/tiles/heart.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "collectible"
+    },
+    {
+      "key": "hill",
+      "path": "assets/sprites/tiles/hill.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "hill_top",
+      "path": "assets/sprites/tiles/hill_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "hill_top_smile",
+      "path": "assets/sprites/tiles/hill_top_smile.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "hud_character_0",
+      "path": "assets/sprites/tiles/hud_character_0.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_character_1",
+      "path": "assets/sprites/tiles/hud_character_1.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_character_2",
+      "path": "assets/sprites/tiles/hud_character_2.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_character_3",
+      "path": "assets/sprites/tiles/hud_character_3.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_character_4",
+      "path": "assets/sprites/tiles/hud_character_4.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_character_5",
+      "path": "assets/sprites/tiles/hud_character_5.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_character_6",
+      "path": "assets/sprites/tiles/hud_character_6.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_character_7",
+      "path": "assets/sprites/tiles/hud_character_7.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_character_8",
+      "path": "assets/sprites/tiles/hud_character_8.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_character_9",
+      "path": "assets/sprites/tiles/hud_character_9.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_character_multiply",
+      "path": "assets/sprites/tiles/hud_character_multiply.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_character_percent",
+      "path": "assets/sprites/tiles/hud_character_percent.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_coin",
+      "path": "assets/sprites/tiles/hud_coin.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud",
+      "notes": "HUD — score icon"
+    },
+    {
+      "key": "hud_heart",
+      "path": "assets/sprites/tiles/hud_heart.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud",
+      "notes": "HUD — full life heart"
+    },
+    {
+      "key": "hud_heart_empty",
+      "path": "assets/sprites/tiles/hud_heart_empty.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud",
+      "notes": "HUD — empty life slot"
+    },
+    {
+      "key": "hud_heart_half",
+      "path": "assets/sprites/tiles/hud_heart_half.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud",
+      "notes": "HUD — half life"
+    },
+    {
+      "key": "hud_key_blue",
+      "path": "assets/sprites/tiles/hud_key_blue.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_key_green",
+      "path": "assets/sprites/tiles/hud_key_green.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_key_red",
+      "path": "assets/sprites/tiles/hud_key_red.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_key_yellow",
+      "path": "assets/sprites/tiles/hud_key_yellow.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_player_beige",
+      "path": "assets/sprites/tiles/hud_player_beige.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_player_green",
+      "path": "assets/sprites/tiles/hud_player_green.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_player_helmet_beige",
+      "path": "assets/sprites/tiles/hud_player_helmet_beige.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_player_helmet_green",
+      "path": "assets/sprites/tiles/hud_player_helmet_green.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_player_helmet_pink",
+      "path": "assets/sprites/tiles/hud_player_helmet_pink.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_player_helmet_purple",
+      "path": "assets/sprites/tiles/hud_player_helmet_purple.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_player_helmet_yellow",
+      "path": "assets/sprites/tiles/hud_player_helmet_yellow.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_player_pink",
+      "path": "assets/sprites/tiles/hud_player_pink.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_player_purple",
+      "path": "assets/sprites/tiles/hud_player_purple.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "hud_player_yellow",
+      "path": "assets/sprites/tiles/hud_player_yellow.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hud"
+    },
+    {
+      "key": "key_blue",
+      "path": "assets/sprites/tiles/key_blue.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "key_green",
+      "path": "assets/sprites/tiles/key_green.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "key_red",
+      "path": "assets/sprites/tiles/key_red.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "key_yellow",
+      "path": "assets/sprites/tiles/key_yellow.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "ladder_bottom",
+      "path": "assets/sprites/tiles/ladder_bottom.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "platform"
+    },
+    {
+      "key": "ladder_middle",
+      "path": "assets/sprites/tiles/ladder_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "platform"
+    },
+    {
+      "key": "ladder_top",
+      "path": "assets/sprites/tiles/ladder_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "platform"
+    },
+    {
+      "key": "lava",
+      "path": "assets/sprites/tiles/lava.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hazard",
+      "notes": "Hazard — fluid fill tile"
+    },
+    {
+      "key": "lava_top",
+      "path": "assets/sprites/tiles/lava_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hazard",
+      "notes": "Hazard — lava surface"
+    },
+    {
+      "key": "lava_top_low",
+      "path": "assets/sprites/tiles/lava_top_low.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hazard"
+    },
+    {
+      "key": "lever",
+      "path": "assets/sprites/tiles/lever.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "lever_left",
+      "path": "assets/sprites/tiles/lever_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "lever_right",
+      "path": "assets/sprites/tiles/lever_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "lock_blue",
+      "path": "assets/sprites/tiles/lock_blue.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "lock_green",
+      "path": "assets/sprites/tiles/lock_green.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "lock_red",
+      "path": "assets/sprites/tiles/lock_red.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "lock_yellow",
+      "path": "assets/sprites/tiles/lock_yellow.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "mushroom_brown",
+      "path": "assets/sprites/tiles/mushroom_brown.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "mushroom_red",
+      "path": "assets/sprites/tiles/mushroom_red.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "ramp",
+      "path": "assets/sprites/tiles/ramp.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "platform"
+    },
+    {
+      "key": "rock",
+      "path": "assets/sprites/tiles/rock.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "rop_attached",
+      "path": "assets/sprites/tiles/rop_attached.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "platform",
+      "notes": "Source filename typo (missing e in \"rope\") — Kenney pack as-shipped"
+    },
+    {
+      "key": "rope",
+      "path": "assets/sprites/tiles/rope.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "platform"
+    },
+    {
+      "key": "saw",
+      "path": "assets/sprites/tiles/saw.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hazard"
+    },
+    {
+      "key": "sign",
+      "path": "assets/sprites/tiles/sign.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "sign_exit",
+      "path": "assets/sprites/tiles/sign_exit.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "sign_left",
+      "path": "assets/sprites/tiles/sign_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "sign_right",
+      "path": "assets/sprites/tiles/sign_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "snow",
+      "path": "assets/sprites/tiles/snow.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "spikes",
+      "path": "assets/sprites/tiles/spikes.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "hazard",
+      "notes": "Hazard — instant death on contact"
+    },
+    {
+      "key": "spring",
+      "path": "assets/sprites/tiles/spring.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "platform"
+    },
+    {
+      "key": "spring_out",
+      "path": "assets/sprites/tiles/spring_out.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "platform"
+    },
+    {
+      "key": "star",
+      "path": "assets/sprites/tiles/star.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "collectible"
+    },
+    {
+      "key": "switch_blue",
+      "path": "assets/sprites/tiles/switch_blue.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "switch_blue_pressed",
+      "path": "assets/sprites/tiles/switch_blue_pressed.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "switch_green",
+      "path": "assets/sprites/tiles/switch_green.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "switch_green_pressed",
+      "path": "assets/sprites/tiles/switch_green_pressed.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "switch_red",
+      "path": "assets/sprites/tiles/switch_red.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "switch_red_pressed",
+      "path": "assets/sprites/tiles/switch_red_pressed.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "switch_yellow",
+      "path": "assets/sprites/tiles/switch_yellow.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "switch_yellow_pressed",
+      "path": "assets/sprites/tiles/switch_yellow_pressed.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "interactive"
+    },
+    {
+      "key": "terrain_dirt_block",
+      "path": "assets/sprites/tiles/terrain_dirt_block.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_block_bottom",
+      "path": "assets/sprites/tiles/terrain_dirt_block_bottom.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_block_bottom_left",
+      "path": "assets/sprites/tiles/terrain_dirt_block_bottom_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_block_bottom_right",
+      "path": "assets/sprites/tiles/terrain_dirt_block_bottom_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_block_center",
+      "path": "assets/sprites/tiles/terrain_dirt_block_center.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_block_left",
+      "path": "assets/sprites/tiles/terrain_dirt_block_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_block_right",
+      "path": "assets/sprites/tiles/terrain_dirt_block_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_block_top",
+      "path": "assets/sprites/tiles/terrain_dirt_block_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_block_top_left",
+      "path": "assets/sprites/tiles/terrain_dirt_block_top_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_block_top_right",
+      "path": "assets/sprites/tiles/terrain_dirt_block_top_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_cloud",
+      "path": "assets/sprites/tiles/terrain_dirt_cloud.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_cloud_background",
+      "path": "assets/sprites/tiles/terrain_dirt_cloud_background.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_cloud_left",
+      "path": "assets/sprites/tiles/terrain_dirt_cloud_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_cloud_middle",
+      "path": "assets/sprites/tiles/terrain_dirt_cloud_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_cloud_right",
+      "path": "assets/sprites/tiles/terrain_dirt_cloud_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_horizontal_left",
+      "path": "assets/sprites/tiles/terrain_dirt_horizontal_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_horizontal_middle",
+      "path": "assets/sprites/tiles/terrain_dirt_horizontal_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_horizontal_overhang_left",
+      "path": "assets/sprites/tiles/terrain_dirt_horizontal_overhang_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_horizontal_overhang_right",
+      "path": "assets/sprites/tiles/terrain_dirt_horizontal_overhang_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_horizontal_right",
+      "path": "assets/sprites/tiles/terrain_dirt_horizontal_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_ramp_long_a",
+      "path": "assets/sprites/tiles/terrain_dirt_ramp_long_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_ramp_long_b",
+      "path": "assets/sprites/tiles/terrain_dirt_ramp_long_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_ramp_long_c",
+      "path": "assets/sprites/tiles/terrain_dirt_ramp_long_c.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_ramp_short_a",
+      "path": "assets/sprites/tiles/terrain_dirt_ramp_short_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_ramp_short_b",
+      "path": "assets/sprites/tiles/terrain_dirt_ramp_short_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_vertical_bottom",
+      "path": "assets/sprites/tiles/terrain_dirt_vertical_bottom.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_vertical_middle",
+      "path": "assets/sprites/tiles/terrain_dirt_vertical_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_dirt_vertical_top",
+      "path": "assets/sprites/tiles/terrain_dirt_vertical_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_block",
+      "path": "assets/sprites/tiles/terrain_grass_block.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_block_bottom",
+      "path": "assets/sprites/tiles/terrain_grass_block_bottom.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_block_bottom_left",
+      "path": "assets/sprites/tiles/terrain_grass_block_bottom_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_block_bottom_right",
+      "path": "assets/sprites/tiles/terrain_grass_block_bottom_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_block_center",
+      "path": "assets/sprites/tiles/terrain_grass_block_center.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_block_left",
+      "path": "assets/sprites/tiles/terrain_grass_block_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_block_right",
+      "path": "assets/sprites/tiles/terrain_grass_block_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_block_top",
+      "path": "assets/sprites/tiles/terrain_grass_block_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_block_top_left",
+      "path": "assets/sprites/tiles/terrain_grass_block_top_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_block_top_right",
+      "path": "assets/sprites/tiles/terrain_grass_block_top_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_cloud",
+      "path": "assets/sprites/tiles/terrain_grass_cloud.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_cloud_background",
+      "path": "assets/sprites/tiles/terrain_grass_cloud_background.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_cloud_left",
+      "path": "assets/sprites/tiles/terrain_grass_cloud_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_cloud_middle",
+      "path": "assets/sprites/tiles/terrain_grass_cloud_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_cloud_right",
+      "path": "assets/sprites/tiles/terrain_grass_cloud_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_horizontal_left",
+      "path": "assets/sprites/tiles/terrain_grass_horizontal_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_horizontal_middle",
+      "path": "assets/sprites/tiles/terrain_grass_horizontal_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_horizontal_overhang_left",
+      "path": "assets/sprites/tiles/terrain_grass_horizontal_overhang_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_horizontal_overhang_right",
+      "path": "assets/sprites/tiles/terrain_grass_horizontal_overhang_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_horizontal_right",
+      "path": "assets/sprites/tiles/terrain_grass_horizontal_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_ramp_long_a",
+      "path": "assets/sprites/tiles/terrain_grass_ramp_long_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_ramp_long_b",
+      "path": "assets/sprites/tiles/terrain_grass_ramp_long_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_ramp_long_c",
+      "path": "assets/sprites/tiles/terrain_grass_ramp_long_c.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_ramp_short_a",
+      "path": "assets/sprites/tiles/terrain_grass_ramp_short_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_ramp_short_b",
+      "path": "assets/sprites/tiles/terrain_grass_ramp_short_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_vertical_bottom",
+      "path": "assets/sprites/tiles/terrain_grass_vertical_bottom.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_vertical_middle",
+      "path": "assets/sprites/tiles/terrain_grass_vertical_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_grass_vertical_top",
+      "path": "assets/sprites/tiles/terrain_grass_vertical_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_block",
+      "path": "assets/sprites/tiles/terrain_purple_block.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_block_bottom",
+      "path": "assets/sprites/tiles/terrain_purple_block_bottom.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain",
+      "notes": "Used in level1.json"
+    },
+    {
+      "key": "terrain_purple_block_bottom_left",
+      "path": "assets/sprites/tiles/terrain_purple_block_bottom_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain",
+      "notes": "Used in level1.json"
+    },
+    {
+      "key": "terrain_purple_block_bottom_right",
+      "path": "assets/sprites/tiles/terrain_purple_block_bottom_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain",
+      "notes": "Used in level1.json"
+    },
+    {
+      "key": "terrain_purple_block_center",
+      "path": "assets/sprites/tiles/terrain_purple_block_center.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain",
+      "notes": "Used in level1.json"
+    },
+    {
+      "key": "terrain_purple_block_left",
+      "path": "assets/sprites/tiles/terrain_purple_block_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain",
+      "notes": "Used in level1.json"
+    },
+    {
+      "key": "terrain_purple_block_right",
+      "path": "assets/sprites/tiles/terrain_purple_block_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain",
+      "notes": "Used in level1.json"
+    },
+    {
+      "key": "terrain_purple_block_top",
+      "path": "assets/sprites/tiles/terrain_purple_block_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain",
+      "notes": "Used in level1.json"
+    },
+    {
+      "key": "terrain_purple_block_top_left",
+      "path": "assets/sprites/tiles/terrain_purple_block_top_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain",
+      "notes": "Used in level1.json (kenney-tiles tileset)"
+    },
+    {
+      "key": "terrain_purple_block_top_right",
+      "path": "assets/sprites/tiles/terrain_purple_block_top_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain",
+      "notes": "Used in level1.json"
+    },
+    {
+      "key": "terrain_purple_cloud",
+      "path": "assets/sprites/tiles/terrain_purple_cloud.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_cloud_background",
+      "path": "assets/sprites/tiles/terrain_purple_cloud_background.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain",
+      "notes": "Used in level1.json — decorative cloud"
+    },
+    {
+      "key": "terrain_purple_cloud_left",
+      "path": "assets/sprites/tiles/terrain_purple_cloud_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_cloud_middle",
+      "path": "assets/sprites/tiles/terrain_purple_cloud_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_cloud_right",
+      "path": "assets/sprites/tiles/terrain_purple_cloud_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_horizontal_left",
+      "path": "assets/sprites/tiles/terrain_purple_horizontal_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_horizontal_middle",
+      "path": "assets/sprites/tiles/terrain_purple_horizontal_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_horizontal_overhang_left",
+      "path": "assets/sprites/tiles/terrain_purple_horizontal_overhang_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_horizontal_overhang_right",
+      "path": "assets/sprites/tiles/terrain_purple_horizontal_overhang_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_horizontal_right",
+      "path": "assets/sprites/tiles/terrain_purple_horizontal_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_ramp_long_a",
+      "path": "assets/sprites/tiles/terrain_purple_ramp_long_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_ramp_long_b",
+      "path": "assets/sprites/tiles/terrain_purple_ramp_long_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_ramp_long_c",
+      "path": "assets/sprites/tiles/terrain_purple_ramp_long_c.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_ramp_short_a",
+      "path": "assets/sprites/tiles/terrain_purple_ramp_short_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_ramp_short_b",
+      "path": "assets/sprites/tiles/terrain_purple_ramp_short_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_vertical_bottom",
+      "path": "assets/sprites/tiles/terrain_purple_vertical_bottom.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_vertical_middle",
+      "path": "assets/sprites/tiles/terrain_purple_vertical_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_purple_vertical_top",
+      "path": "assets/sprites/tiles/terrain_purple_vertical_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_block",
+      "path": "assets/sprites/tiles/terrain_sand_block.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_block_bottom",
+      "path": "assets/sprites/tiles/terrain_sand_block_bottom.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_block_bottom_left",
+      "path": "assets/sprites/tiles/terrain_sand_block_bottom_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_block_bottom_right",
+      "path": "assets/sprites/tiles/terrain_sand_block_bottom_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_block_center",
+      "path": "assets/sprites/tiles/terrain_sand_block_center.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_block_left",
+      "path": "assets/sprites/tiles/terrain_sand_block_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_block_right",
+      "path": "assets/sprites/tiles/terrain_sand_block_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_block_top",
+      "path": "assets/sprites/tiles/terrain_sand_block_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_block_top_left",
+      "path": "assets/sprites/tiles/terrain_sand_block_top_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_block_top_right",
+      "path": "assets/sprites/tiles/terrain_sand_block_top_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_cloud",
+      "path": "assets/sprites/tiles/terrain_sand_cloud.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_cloud_background",
+      "path": "assets/sprites/tiles/terrain_sand_cloud_background.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_cloud_left",
+      "path": "assets/sprites/tiles/terrain_sand_cloud_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_cloud_middle",
+      "path": "assets/sprites/tiles/terrain_sand_cloud_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_cloud_right",
+      "path": "assets/sprites/tiles/terrain_sand_cloud_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_horizontal_left",
+      "path": "assets/sprites/tiles/terrain_sand_horizontal_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_horizontal_middle",
+      "path": "assets/sprites/tiles/terrain_sand_horizontal_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_horizontal_overhang_left",
+      "path": "assets/sprites/tiles/terrain_sand_horizontal_overhang_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_horizontal_overhang_right",
+      "path": "assets/sprites/tiles/terrain_sand_horizontal_overhang_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_horizontal_right",
+      "path": "assets/sprites/tiles/terrain_sand_horizontal_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_ramp_long_a",
+      "path": "assets/sprites/tiles/terrain_sand_ramp_long_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_ramp_long_b",
+      "path": "assets/sprites/tiles/terrain_sand_ramp_long_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_ramp_long_c",
+      "path": "assets/sprites/tiles/terrain_sand_ramp_long_c.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_ramp_short_a",
+      "path": "assets/sprites/tiles/terrain_sand_ramp_short_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_ramp_short_b",
+      "path": "assets/sprites/tiles/terrain_sand_ramp_short_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_vertical_bottom",
+      "path": "assets/sprites/tiles/terrain_sand_vertical_bottom.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_vertical_middle",
+      "path": "assets/sprites/tiles/terrain_sand_vertical_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_sand_vertical_top",
+      "path": "assets/sprites/tiles/terrain_sand_vertical_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_block",
+      "path": "assets/sprites/tiles/terrain_snow_block.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_block_bottom",
+      "path": "assets/sprites/tiles/terrain_snow_block_bottom.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_block_bottom_left",
+      "path": "assets/sprites/tiles/terrain_snow_block_bottom_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_block_bottom_right",
+      "path": "assets/sprites/tiles/terrain_snow_block_bottom_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_block_center",
+      "path": "assets/sprites/tiles/terrain_snow_block_center.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_block_left",
+      "path": "assets/sprites/tiles/terrain_snow_block_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_block_right",
+      "path": "assets/sprites/tiles/terrain_snow_block_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_block_top",
+      "path": "assets/sprites/tiles/terrain_snow_block_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_block_top_left",
+      "path": "assets/sprites/tiles/terrain_snow_block_top_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_block_top_right",
+      "path": "assets/sprites/tiles/terrain_snow_block_top_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_cloud",
+      "path": "assets/sprites/tiles/terrain_snow_cloud.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_cloud_background",
+      "path": "assets/sprites/tiles/terrain_snow_cloud_background.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_cloud_left",
+      "path": "assets/sprites/tiles/terrain_snow_cloud_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_cloud_middle",
+      "path": "assets/sprites/tiles/terrain_snow_cloud_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_cloud_right",
+      "path": "assets/sprites/tiles/terrain_snow_cloud_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_horizontal_left",
+      "path": "assets/sprites/tiles/terrain_snow_horizontal_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_horizontal_middle",
+      "path": "assets/sprites/tiles/terrain_snow_horizontal_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_horizontal_overhang_left",
+      "path": "assets/sprites/tiles/terrain_snow_horizontal_overhang_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_horizontal_overhang_right",
+      "path": "assets/sprites/tiles/terrain_snow_horizontal_overhang_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_horizontal_right",
+      "path": "assets/sprites/tiles/terrain_snow_horizontal_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_ramp_long_a",
+      "path": "assets/sprites/tiles/terrain_snow_ramp_long_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_ramp_long_b",
+      "path": "assets/sprites/tiles/terrain_snow_ramp_long_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_ramp_long_c",
+      "path": "assets/sprites/tiles/terrain_snow_ramp_long_c.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_ramp_short_a",
+      "path": "assets/sprites/tiles/terrain_snow_ramp_short_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_ramp_short_b",
+      "path": "assets/sprites/tiles/terrain_snow_ramp_short_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_vertical_bottom",
+      "path": "assets/sprites/tiles/terrain_snow_vertical_bottom.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_vertical_middle",
+      "path": "assets/sprites/tiles/terrain_snow_vertical_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_snow_vertical_top",
+      "path": "assets/sprites/tiles/terrain_snow_vertical_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_block",
+      "path": "assets/sprites/tiles/terrain_stone_block.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_block_bottom",
+      "path": "assets/sprites/tiles/terrain_stone_block_bottom.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_block_bottom_left",
+      "path": "assets/sprites/tiles/terrain_stone_block_bottom_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_block_bottom_right",
+      "path": "assets/sprites/tiles/terrain_stone_block_bottom_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_block_center",
+      "path": "assets/sprites/tiles/terrain_stone_block_center.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_block_left",
+      "path": "assets/sprites/tiles/terrain_stone_block_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_block_right",
+      "path": "assets/sprites/tiles/terrain_stone_block_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_block_top",
+      "path": "assets/sprites/tiles/terrain_stone_block_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_block_top_left",
+      "path": "assets/sprites/tiles/terrain_stone_block_top_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_block_top_right",
+      "path": "assets/sprites/tiles/terrain_stone_block_top_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_cloud",
+      "path": "assets/sprites/tiles/terrain_stone_cloud.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_cloud_background",
+      "path": "assets/sprites/tiles/terrain_stone_cloud_background.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_cloud_left",
+      "path": "assets/sprites/tiles/terrain_stone_cloud_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_cloud_middle",
+      "path": "assets/sprites/tiles/terrain_stone_cloud_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_cloud_right",
+      "path": "assets/sprites/tiles/terrain_stone_cloud_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_horizontal_left",
+      "path": "assets/sprites/tiles/terrain_stone_horizontal_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_horizontal_middle",
+      "path": "assets/sprites/tiles/terrain_stone_horizontal_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_horizontal_overhang_left",
+      "path": "assets/sprites/tiles/terrain_stone_horizontal_overhang_left.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_horizontal_overhang_right",
+      "path": "assets/sprites/tiles/terrain_stone_horizontal_overhang_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_horizontal_right",
+      "path": "assets/sprites/tiles/terrain_stone_horizontal_right.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_ramp_long_a",
+      "path": "assets/sprites/tiles/terrain_stone_ramp_long_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_ramp_long_b",
+      "path": "assets/sprites/tiles/terrain_stone_ramp_long_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_ramp_long_c",
+      "path": "assets/sprites/tiles/terrain_stone_ramp_long_c.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_ramp_short_a",
+      "path": "assets/sprites/tiles/terrain_stone_ramp_short_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_ramp_short_b",
+      "path": "assets/sprites/tiles/terrain_stone_ramp_short_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_vertical_bottom",
+      "path": "assets/sprites/tiles/terrain_stone_vertical_bottom.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_vertical_middle",
+      "path": "assets/sprites/tiles/terrain_stone_vertical_middle.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "terrain_stone_vertical_top",
+      "path": "assets/sprites/tiles/terrain_stone_vertical_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "terrain"
+    },
+    {
+      "key": "torch_off",
+      "path": "assets/sprites/tiles/torch_off.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "torch_on_a",
+      "path": "assets/sprites/tiles/torch_on_a.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "torch_on_b",
+      "path": "assets/sprites/tiles/torch_on_b.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "water",
+      "path": "assets/sprites/tiles/water.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "fluid"
+    },
+    {
+      "key": "water_top",
+      "path": "assets/sprites/tiles/water_top.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "fluid"
+    },
+    {
+      "key": "water_top_low",
+      "path": "assets/sprites/tiles/water_top_low.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "fluid"
+    },
+    {
+      "key": "weight",
+      "path": "assets/sprites/tiles/weight.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    },
+    {
+      "key": "window",
+      "path": "assets/sprites/tiles/window.png",
+      "width": 64,
+      "height": 64,
+      "category": "tile",
+      "subcategory": "decoration"
+    }
+  ]
+}
