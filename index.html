@@ -27,9 +27,9 @@
   <script>
     const config = {
       type: Phaser.AUTO,
-      width: 800,
-      height: 450,
-      backgroundColor: '#0a0a0f',
+      width: 1280,
+      height: 720,
+      backgroundColor: '#1a1a2e',
       scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
@@ -37,8 +37,8 @@
       physics: {
         default: 'arcade',
         arcade: {
-          gravity: { y: 600 },
-          debug: false
+          gravity: { y: 800 },
+          debug: true   // toggle at runtime with G key
         }
       },
       scene: {
@@ -50,84 +50,533 @@
 
     const game = new Phaser.Game(config);
 
-    // ── VARIABLES ────────────────────────────────
-    let player;
-    let platforms;
-    let cursors;
+    // ── CONSTANTS ─────────────────────────────────────────
+    const MOVE_SPEED   = 250;
+    const JUMP_VEL     = -600;
+    const COYOTE_MS    = 150;   // grace window after leaving a platform edge
 
-    // ── PRELOAD — runs once, loads all assets ────────────
+    // ── VARIABLES ─────────────────────────────────────────
+    let player;
+    let groundLayer;
+    let platformsGroup;
+    let cursors;
+    let wasd;
+    let coyoteTimer = 0;        // ms remaining in coyote window
+    let debugText;              // HUD text object (fixed to camera)
+    let keyG;                   // G key — toggles physics hitbox overlay
+
+    // ── PRELOAD ───────────────────────────────────────────
     function preload() {
 
-      // Background
-      this.load.image('bg', 'assets/backgrounds/background_color_hills.png');
+      // ── Player spritesheet — femaleAdventurer, 96×128 px per frame ──
+      // From assets.json spritesheets[0]: 45 frames, no spacing
+      this.load.spritesheet('player',
+        'assets/sprites/character/Tilesheet/character_femaleAdventurer_sheet.png',
+        { frameWidth: 96, frameHeight: 128 }
+      );
 
-      // Player frames — individual PNGs from Kenney pack
-      this.load.image('idle', 'assets/sprites/character/character_beige_idle.png');
-      this.load.image('walk_a', 'assets/sprites/character/character_beige_walk_a.png');
-      this.load.image('walk_b', 'assets/sprites/character/character_beige_walk_b.png');
-      this.load.image('jump', 'assets/sprites/character/character_beige_jump.png');
+      // ── Tile images — all 314 entries, 64×64 px each ──
+      // Keys and paths from assets.json tiles[]
+      this.load.image('block_blue', 'assets/sprites/tiles/block_blue.png');
+      this.load.image('block_coin', 'assets/sprites/tiles/block_coin.png');
+      this.load.image('block_coin_active', 'assets/sprites/tiles/block_coin_active.png');
+      this.load.image('block_empty', 'assets/sprites/tiles/block_empty.png');
+      this.load.image('block_empty_warning', 'assets/sprites/tiles/block_empty_warning.png');
+      this.load.image('block_exclamation', 'assets/sprites/tiles/block_exclamation.png');
+      this.load.image('block_exclamation_active', 'assets/sprites/tiles/block_exclamation_active.png');
+      this.load.image('block_green', 'assets/sprites/tiles/block_green.png');
+      this.load.image('block_plank', 'assets/sprites/tiles/block_plank.png');
+      this.load.image('block_planks', 'assets/sprites/tiles/block_planks.png');
+      this.load.image('block_red', 'assets/sprites/tiles/block_red.png');
+      this.load.image('block_spikes', 'assets/sprites/tiles/block_spikes.png');
+      this.load.image('block_strong_coin', 'assets/sprites/tiles/block_strong_coin.png');
+      this.load.image('block_strong_coin_active', 'assets/sprites/tiles/block_strong_coin_active.png');
+      this.load.image('block_strong_danger', 'assets/sprites/tiles/block_strong_danger.png');
+      this.load.image('block_strong_danger_active', 'assets/sprites/tiles/block_strong_danger_active.png');
+      this.load.image('block_strong_empty', 'assets/sprites/tiles/block_strong_empty.png');
+      this.load.image('block_strong_empty_active', 'assets/sprites/tiles/block_strong_empty_active.png');
+      this.load.image('block_strong_exclamation', 'assets/sprites/tiles/block_strong_exclamation.png');
+      this.load.image('block_strong_exclamation_active', 'assets/sprites/tiles/block_strong_exclamation_active.png');
+      this.load.image('block_yellow', 'assets/sprites/tiles/block_yellow.png');
+      this.load.image('bomb', 'assets/sprites/tiles/bomb.png');
+      this.load.image('bomb_active', 'assets/sprites/tiles/bomb_active.png');
+      this.load.image('brick_brown', 'assets/sprites/tiles/brick_brown.png');
+      this.load.image('brick_brown_diagonal', 'assets/sprites/tiles/brick_brown_diagonal.png');
+      this.load.image('brick_grey', 'assets/sprites/tiles/brick_grey.png');
+      this.load.image('brick_grey_diagonal', 'assets/sprites/tiles/brick_grey_diagonal.png');
+      this.load.image('bricks_brown', 'assets/sprites/tiles/bricks_brown.png');
+      this.load.image('bricks_grey', 'assets/sprites/tiles/bricks_grey.png');
+      this.load.image('bridge', 'assets/sprites/tiles/bridge.png');
+      this.load.image('bridge_logs', 'assets/sprites/tiles/bridge_logs.png');
+      this.load.image('bush', 'assets/sprites/tiles/bush.png');
+      this.load.image('cactus', 'assets/sprites/tiles/cactus.png');
+      this.load.image('chain', 'assets/sprites/tiles/chain.png');
+      this.load.image('coin_bronze', 'assets/sprites/tiles/coin_bronze.png');
+      this.load.image('coin_bronze_side', 'assets/sprites/tiles/coin_bronze_side.png');
+      this.load.image('coin_gold', 'assets/sprites/tiles/coin_gold.png');
+      this.load.image('coin_gold_side', 'assets/sprites/tiles/coin_gold_side.png');
+      this.load.image('coin_silver', 'assets/sprites/tiles/coin_silver.png');
+      this.load.image('coin_silver_side', 'assets/sprites/tiles/coin_silver_side.png');
+      this.load.image('conveyor', 'assets/sprites/tiles/conveyor.png');
+      this.load.image('door_closed', 'assets/sprites/tiles/door_closed.png');
+      this.load.image('door_closed_top', 'assets/sprites/tiles/door_closed_top.png');
+      this.load.image('door_open', 'assets/sprites/tiles/door_open.png');
+      this.load.image('door_open_top', 'assets/sprites/tiles/door_open_top.png');
+      this.load.image('fence', 'assets/sprites/tiles/fence.png');
+      this.load.image('fence_broken', 'assets/sprites/tiles/fence_broken.png');
+      this.load.image('fireball', 'assets/sprites/tiles/fireball.png');
+      this.load.image('flag_blue_a', 'assets/sprites/tiles/flag_blue_a.png');
+      this.load.image('flag_blue_b', 'assets/sprites/tiles/flag_blue_b.png');
+      this.load.image('flag_green_a', 'assets/sprites/tiles/flag_green_a.png');
+      this.load.image('flag_green_b', 'assets/sprites/tiles/flag_green_b.png');
+      this.load.image('flag_off', 'assets/sprites/tiles/flag_off.png');
+      this.load.image('flag_red_a', 'assets/sprites/tiles/flag_red_a.png');
+      this.load.image('flag_red_b', 'assets/sprites/tiles/flag_red_b.png');
+      this.load.image('flag_yellow_a', 'assets/sprites/tiles/flag_yellow_a.png');
+      this.load.image('flag_yellow_b', 'assets/sprites/tiles/flag_yellow_b.png');
+      this.load.image('gem_blue', 'assets/sprites/tiles/gem_blue.png');
+      this.load.image('gem_green', 'assets/sprites/tiles/gem_green.png');
+      this.load.image('gem_red', 'assets/sprites/tiles/gem_red.png');
+      this.load.image('gem_yellow', 'assets/sprites/tiles/gem_yellow.png');
+      this.load.image('grass', 'assets/sprites/tiles/grass.png');
+      this.load.image('grass_purple', 'assets/sprites/tiles/grass_purple.png');
+      this.load.image('heart', 'assets/sprites/tiles/heart.png');
+      this.load.image('hill', 'assets/sprites/tiles/hill.png');
+      this.load.image('hill_top', 'assets/sprites/tiles/hill_top.png');
+      this.load.image('hill_top_smile', 'assets/sprites/tiles/hill_top_smile.png');
+      this.load.image('hud_character_0', 'assets/sprites/tiles/hud_character_0.png');
+      this.load.image('hud_character_1', 'assets/sprites/tiles/hud_character_1.png');
+      this.load.image('hud_character_2', 'assets/sprites/tiles/hud_character_2.png');
+      this.load.image('hud_character_3', 'assets/sprites/tiles/hud_character_3.png');
+      this.load.image('hud_character_4', 'assets/sprites/tiles/hud_character_4.png');
+      this.load.image('hud_character_5', 'assets/sprites/tiles/hud_character_5.png');
+      this.load.image('hud_character_6', 'assets/sprites/tiles/hud_character_6.png');
+      this.load.image('hud_character_7', 'assets/sprites/tiles/hud_character_7.png');
+      this.load.image('hud_character_8', 'assets/sprites/tiles/hud_character_8.png');
+      this.load.image('hud_character_9', 'assets/sprites/tiles/hud_character_9.png');
+      this.load.image('hud_character_multiply', 'assets/sprites/tiles/hud_character_multiply.png');
+      this.load.image('hud_character_percent', 'assets/sprites/tiles/hud_character_percent.png');
+      this.load.image('hud_coin', 'assets/sprites/tiles/hud_coin.png');
+      this.load.image('hud_heart', 'assets/sprites/tiles/hud_heart.png');
+      this.load.image('hud_heart_empty', 'assets/sprites/tiles/hud_heart_empty.png');
+      this.load.image('hud_heart_half', 'assets/sprites/tiles/hud_heart_half.png');
+      this.load.image('hud_key_blue', 'assets/sprites/tiles/hud_key_blue.png');
+      this.load.image('hud_key_green', 'assets/sprites/tiles/hud_key_green.png');
+      this.load.image('hud_key_red', 'assets/sprites/tiles/hud_key_red.png');
+      this.load.image('hud_key_yellow', 'assets/sprites/tiles/hud_key_yellow.png');
+      this.load.image('hud_player_beige', 'assets/sprites/tiles/hud_player_beige.png');
+      this.load.image('hud_player_green', 'assets/sprites/tiles/hud_player_green.png');
+      this.load.image('hud_player_helmet_beige', 'assets/sprites/tiles/hud_player_helmet_beige.png');
+      this.load.image('hud_player_helmet_green', 'assets/sprites/tiles/hud_player_helmet_green.png');
+      this.load.image('hud_player_helmet_pink', 'assets/sprites/tiles/hud_player_helmet_pink.png');
+      this.load.image('hud_player_helmet_purple', 'assets/sprites/tiles/hud_player_helmet_purple.png');
+      this.load.image('hud_player_helmet_yellow', 'assets/sprites/tiles/hud_player_helmet_yellow.png');
+      this.load.image('hud_player_pink', 'assets/sprites/tiles/hud_player_pink.png');
+      this.load.image('hud_player_purple', 'assets/sprites/tiles/hud_player_purple.png');
+      this.load.image('hud_player_yellow', 'assets/sprites/tiles/hud_player_yellow.png');
+      this.load.image('key_blue', 'assets/sprites/tiles/key_blue.png');
+      this.load.image('key_green', 'assets/sprites/tiles/key_green.png');
+      this.load.image('key_red', 'assets/sprites/tiles/key_red.png');
+      this.load.image('key_yellow', 'assets/sprites/tiles/key_yellow.png');
+      this.load.image('ladder_bottom', 'assets/sprites/tiles/ladder_bottom.png');
+      this.load.image('ladder_middle', 'assets/sprites/tiles/ladder_middle.png');
+      this.load.image('ladder_top', 'assets/sprites/tiles/ladder_top.png');
+      this.load.image('lava', 'assets/sprites/tiles/lava.png');
+      this.load.image('lava_top', 'assets/sprites/tiles/lava_top.png');
+      this.load.image('lava_top_low', 'assets/sprites/tiles/lava_top_low.png');
+      this.load.image('lever', 'assets/sprites/tiles/lever.png');
+      this.load.image('lever_left', 'assets/sprites/tiles/lever_left.png');
+      this.load.image('lever_right', 'assets/sprites/tiles/lever_right.png');
+      this.load.image('lock_blue', 'assets/sprites/tiles/lock_blue.png');
+      this.load.image('lock_green', 'assets/sprites/tiles/lock_green.png');
+      this.load.image('lock_red', 'assets/sprites/tiles/lock_red.png');
+      this.load.image('lock_yellow', 'assets/sprites/tiles/lock_yellow.png');
+      this.load.image('mushroom_brown', 'assets/sprites/tiles/mushroom_brown.png');
+      this.load.image('mushroom_red', 'assets/sprites/tiles/mushroom_red.png');
+      this.load.image('ramp', 'assets/sprites/tiles/ramp.png');
+      this.load.image('rock', 'assets/sprites/tiles/rock.png');
+      this.load.image('rop_attached', 'assets/sprites/tiles/rop_attached.png');
+      this.load.image('rope', 'assets/sprites/tiles/rope.png');
+      this.load.image('saw', 'assets/sprites/tiles/saw.png');
+      this.load.image('sign', 'assets/sprites/tiles/sign.png');
+      this.load.image('sign_exit', 'assets/sprites/tiles/sign_exit.png');
+      this.load.image('sign_left', 'assets/sprites/tiles/sign_left.png');
+      this.load.image('sign_right', 'assets/sprites/tiles/sign_right.png');
+      this.load.image('snow', 'assets/sprites/tiles/snow.png');
+      this.load.image('spikes', 'assets/sprites/tiles/spikes.png');
+      this.load.image('spring', 'assets/sprites/tiles/spring.png');
+      this.load.image('spring_out', 'assets/sprites/tiles/spring_out.png');
+      this.load.image('star', 'assets/sprites/tiles/star.png');
+      this.load.image('switch_blue', 'assets/sprites/tiles/switch_blue.png');
+      this.load.image('switch_blue_pressed', 'assets/sprites/tiles/switch_blue_pressed.png');
+      this.load.image('switch_green', 'assets/sprites/tiles/switch_green.png');
+      this.load.image('switch_green_pressed', 'assets/sprites/tiles/switch_green_pressed.png');
+      this.load.image('switch_red', 'assets/sprites/tiles/switch_red.png');
+      this.load.image('switch_red_pressed', 'assets/sprites/tiles/switch_red_pressed.png');
+      this.load.image('switch_yellow', 'assets/sprites/tiles/switch_yellow.png');
+      this.load.image('switch_yellow_pressed', 'assets/sprites/tiles/switch_yellow_pressed.png');
+      this.load.image('terrain_dirt_block', 'assets/sprites/tiles/terrain_dirt_block.png');
+      this.load.image('terrain_dirt_block_bottom', 'assets/sprites/tiles/terrain_dirt_block_bottom.png');
+      this.load.image('terrain_dirt_block_bottom_left', 'assets/sprites/tiles/terrain_dirt_block_bottom_left.png');
+      this.load.image('terrain_dirt_block_bottom_right', 'assets/sprites/tiles/terrain_dirt_block_bottom_right.png');
+      this.load.image('terrain_dirt_block_center', 'assets/sprites/tiles/terrain_dirt_block_center.png');
+      this.load.image('terrain_dirt_block_left', 'assets/sprites/tiles/terrain_dirt_block_left.png');
+      this.load.image('terrain_dirt_block_right', 'assets/sprites/tiles/terrain_dirt_block_right.png');
+      this.load.image('terrain_dirt_block_top', 'assets/sprites/tiles/terrain_dirt_block_top.png');
+      this.load.image('terrain_dirt_block_top_left', 'assets/sprites/tiles/terrain_dirt_block_top_left.png');
+      this.load.image('terrain_dirt_block_top_right', 'assets/sprites/tiles/terrain_dirt_block_top_right.png');
+      this.load.image('terrain_dirt_cloud', 'assets/sprites/tiles/terrain_dirt_cloud.png');
+      this.load.image('terrain_dirt_cloud_background', 'assets/sprites/tiles/terrain_dirt_cloud_background.png');
+      this.load.image('terrain_dirt_cloud_left', 'assets/sprites/tiles/terrain_dirt_cloud_left.png');
+      this.load.image('terrain_dirt_cloud_middle', 'assets/sprites/tiles/terrain_dirt_cloud_middle.png');
+      this.load.image('terrain_dirt_cloud_right', 'assets/sprites/tiles/terrain_dirt_cloud_right.png');
+      this.load.image('terrain_dirt_horizontal_left', 'assets/sprites/tiles/terrain_dirt_horizontal_left.png');
+      this.load.image('terrain_dirt_horizontal_middle', 'assets/sprites/tiles/terrain_dirt_horizontal_middle.png');
+      this.load.image('terrain_dirt_horizontal_overhang_left', 'assets/sprites/tiles/terrain_dirt_horizontal_overhang_left.png');
+      this.load.image('terrain_dirt_horizontal_overhang_right', 'assets/sprites/tiles/terrain_dirt_horizontal_overhang_right.png');
+      this.load.image('terrain_dirt_horizontal_right', 'assets/sprites/tiles/terrain_dirt_horizontal_right.png');
+      this.load.image('terrain_dirt_ramp_long_a', 'assets/sprites/tiles/terrain_dirt_ramp_long_a.png');
+      this.load.image('terrain_dirt_ramp_long_b', 'assets/sprites/tiles/terrain_dirt_ramp_long_b.png');
+      this.load.image('terrain_dirt_ramp_long_c', 'assets/sprites/tiles/terrain_dirt_ramp_long_c.png');
+      this.load.image('terrain_dirt_ramp_short_a', 'assets/sprites/tiles/terrain_dirt_ramp_short_a.png');
+      this.load.image('terrain_dirt_ramp_short_b', 'assets/sprites/tiles/terrain_dirt_ramp_short_b.png');
+      this.load.image('terrain_dirt_vertical_bottom', 'assets/sprites/tiles/terrain_dirt_vertical_bottom.png');
+      this.load.image('terrain_dirt_vertical_middle', 'assets/sprites/tiles/terrain_dirt_vertical_middle.png');
+      this.load.image('terrain_dirt_vertical_top', 'assets/sprites/tiles/terrain_dirt_vertical_top.png');
+      this.load.image('terrain_grass_block', 'assets/sprites/tiles/terrain_grass_block.png');
+      this.load.image('terrain_grass_block_bottom', 'assets/sprites/tiles/terrain_grass_block_bottom.png');
+      this.load.image('terrain_grass_block_bottom_left', 'assets/sprites/tiles/terrain_grass_block_bottom_left.png');
+      this.load.image('terrain_grass_block_bottom_right', 'assets/sprites/tiles/terrain_grass_block_bottom_right.png');
+      this.load.image('terrain_grass_block_center', 'assets/sprites/tiles/terrain_grass_block_center.png');
+      this.load.image('terrain_grass_block_left', 'assets/sprites/tiles/terrain_grass_block_left.png');
+      this.load.image('terrain_grass_block_right', 'assets/sprites/tiles/terrain_grass_block_right.png');
+      this.load.image('terrain_grass_block_top', 'assets/sprites/tiles/terrain_grass_block_top.png');
+      this.load.image('terrain_grass_block_top_left', 'assets/sprites/tiles/terrain_grass_block_top_left.png');
+      this.load.image('terrain_grass_block_top_right', 'assets/sprites/tiles/terrain_grass_block_top_right.png');
+      this.load.image('terrain_grass_cloud', 'assets/sprites/tiles/terrain_grass_cloud.png');
+      this.load.image('terrain_grass_cloud_background', 'assets/sprites/tiles/terrain_grass_cloud_background.png');
+      this.load.image('terrain_grass_cloud_left', 'assets/sprites/tiles/terrain_grass_cloud_left.png');
+      this.load.image('terrain_grass_cloud_middle', 'assets/sprites/tiles/terrain_grass_cloud_middle.png');
+      this.load.image('terrain_grass_cloud_right', 'assets/sprites/tiles/terrain_grass_cloud_right.png');
+      this.load.image('terrain_grass_horizontal_left', 'assets/sprites/tiles/terrain_grass_horizontal_left.png');
+      this.load.image('terrain_grass_horizontal_middle', 'assets/sprites/tiles/terrain_grass_horizontal_middle.png');
+      this.load.image('terrain_grass_horizontal_overhang_left', 'assets/sprites/tiles/terrain_grass_horizontal_overhang_left.png');
+      this.load.image('terrain_grass_horizontal_overhang_right', 'assets/sprites/tiles/terrain_grass_horizontal_overhang_right.png');
+      this.load.image('terrain_grass_horizontal_right', 'assets/sprites/tiles/terrain_grass_horizontal_right.png');
+      this.load.image('terrain_grass_ramp_long_a', 'assets/sprites/tiles/terrain_grass_ramp_long_a.png');
+      this.load.image('terrain_grass_ramp_long_b', 'assets/sprites/tiles/terrain_grass_ramp_long_b.png');
+      this.load.image('terrain_grass_ramp_long_c', 'assets/sprites/tiles/terrain_grass_ramp_long_c.png');
+      this.load.image('terrain_grass_ramp_short_a', 'assets/sprites/tiles/terrain_grass_ramp_short_a.png');
+      this.load.image('terrain_grass_ramp_short_b', 'assets/sprites/tiles/terrain_grass_ramp_short_b.png');
+      this.load.image('terrain_grass_vertical_bottom', 'assets/sprites/tiles/terrain_grass_vertical_bottom.png');
+      this.load.image('terrain_grass_vertical_middle', 'assets/sprites/tiles/terrain_grass_vertical_middle.png');
+      this.load.image('terrain_grass_vertical_top', 'assets/sprites/tiles/terrain_grass_vertical_top.png');
+      this.load.image('terrain_purple_block', 'assets/sprites/tiles/terrain_purple_block.png');
+      this.load.image('terrain_purple_block_bottom', 'assets/sprites/tiles/terrain_purple_block_bottom.png');
+      this.load.image('terrain_purple_block_bottom_left', 'assets/sprites/tiles/terrain_purple_block_bottom_left.png');
+      this.load.image('terrain_purple_block_bottom_right', 'assets/sprites/tiles/terrain_purple_block_bottom_right.png');
+      this.load.image('terrain_purple_block_center', 'assets/sprites/tiles/terrain_purple_block_center.png');
+      this.load.image('terrain_purple_block_left', 'assets/sprites/tiles/terrain_purple_block_left.png');
+      this.load.image('terrain_purple_block_right', 'assets/sprites/tiles/terrain_purple_block_right.png');
+      this.load.image('terrain_purple_block_top', 'assets/sprites/tiles/terrain_purple_block_top.png');
+      this.load.image('terrain_purple_block_top_left', 'assets/sprites/tiles/terrain_purple_block_top_left.png');
+      this.load.image('terrain_purple_block_top_right', 'assets/sprites/tiles/terrain_purple_block_top_right.png');
+      this.load.image('terrain_purple_cloud', 'assets/sprites/tiles/terrain_purple_cloud.png');
+      this.load.image('terrain_purple_cloud_background', 'assets/sprites/tiles/terrain_purple_cloud_background.png');
+      this.load.image('terrain_purple_cloud_left', 'assets/sprites/tiles/terrain_purple_cloud_left.png');
+      this.load.image('terrain_purple_cloud_middle', 'assets/sprites/tiles/terrain_purple_cloud_middle.png');
+      this.load.image('terrain_purple_cloud_right', 'assets/sprites/tiles/terrain_purple_cloud_right.png');
+      this.load.image('terrain_purple_horizontal_left', 'assets/sprites/tiles/terrain_purple_horizontal_left.png');
+      this.load.image('terrain_purple_horizontal_middle', 'assets/sprites/tiles/terrain_purple_horizontal_middle.png');
+      this.load.image('terrain_purple_horizontal_overhang_left', 'assets/sprites/tiles/terrain_purple_horizontal_overhang_left.png');
+      this.load.image('terrain_purple_horizontal_overhang_right', 'assets/sprites/tiles/terrain_purple_horizontal_overhang_right.png');
+      this.load.image('terrain_purple_horizontal_right', 'assets/sprites/tiles/terrain_purple_horizontal_right.png');
+      this.load.image('terrain_purple_ramp_long_a', 'assets/sprites/tiles/terrain_purple_ramp_long_a.png');
+      this.load.image('terrain_purple_ramp_long_b', 'assets/sprites/tiles/terrain_purple_ramp_long_b.png');
+      this.load.image('terrain_purple_ramp_long_c', 'assets/sprites/tiles/terrain_purple_ramp_long_c.png');
+      this.load.image('terrain_purple_ramp_short_a', 'assets/sprites/tiles/terrain_purple_ramp_short_a.png');
+      this.load.image('terrain_purple_ramp_short_b', 'assets/sprites/tiles/terrain_purple_ramp_short_b.png');
+      this.load.image('terrain_purple_vertical_bottom', 'assets/sprites/tiles/terrain_purple_vertical_bottom.png');
+      this.load.image('terrain_purple_vertical_middle', 'assets/sprites/tiles/terrain_purple_vertical_middle.png');
+      this.load.image('terrain_purple_vertical_top', 'assets/sprites/tiles/terrain_purple_vertical_top.png');
+      this.load.image('terrain_sand_block', 'assets/sprites/tiles/terrain_sand_block.png');
+      this.load.image('terrain_sand_block_bottom', 'assets/sprites/tiles/terrain_sand_block_bottom.png');
+      this.load.image('terrain_sand_block_bottom_left', 'assets/sprites/tiles/terrain_sand_block_bottom_left.png');
+      this.load.image('terrain_sand_block_bottom_right', 'assets/sprites/tiles/terrain_sand_block_bottom_right.png');
+      this.load.image('terrain_sand_block_center', 'assets/sprites/tiles/terrain_sand_block_center.png');
+      this.load.image('terrain_sand_block_left', 'assets/sprites/tiles/terrain_sand_block_left.png');
+      this.load.image('terrain_sand_block_right', 'assets/sprites/tiles/terrain_sand_block_right.png');
+      this.load.image('terrain_sand_block_top', 'assets/sprites/tiles/terrain_sand_block_top.png');
+      this.load.image('terrain_sand_block_top_left', 'assets/sprites/tiles/terrain_sand_block_top_left.png');
+      this.load.image('terrain_sand_block_top_right', 'assets/sprites/tiles/terrain_sand_block_top_right.png');
+      this.load.image('terrain_sand_cloud', 'assets/sprites/tiles/terrain_sand_cloud.png');
+      this.load.image('terrain_sand_cloud_background', 'assets/sprites/tiles/terrain_sand_cloud_background.png');
+      this.load.image('terrain_sand_cloud_left', 'assets/sprites/tiles/terrain_sand_cloud_left.png');
+      this.load.image('terrain_sand_cloud_middle', 'assets/sprites/tiles/terrain_sand_cloud_middle.png');
+      this.load.image('terrain_sand_cloud_right', 'assets/sprites/tiles/terrain_sand_cloud_right.png');
+      this.load.image('terrain_sand_horizontal_left', 'assets/sprites/tiles/terrain_sand_horizontal_left.png');
+      this.load.image('terrain_sand_horizontal_middle', 'assets/sprites/tiles/terrain_sand_horizontal_middle.png');
+      this.load.image('terrain_sand_horizontal_overhang_left', 'assets/sprites/tiles/terrain_sand_horizontal_overhang_left.png');
+      this.load.image('terrain_sand_horizontal_overhang_right', 'assets/sprites/tiles/terrain_sand_horizontal_overhang_right.png');
+      this.load.image('terrain_sand_horizontal_right', 'assets/sprites/tiles/terrain_sand_horizontal_right.png');
+      this.load.image('terrain_sand_ramp_long_a', 'assets/sprites/tiles/terrain_sand_ramp_long_a.png');
+      this.load.image('terrain_sand_ramp_long_b', 'assets/sprites/tiles/terrain_sand_ramp_long_b.png');
+      this.load.image('terrain_sand_ramp_long_c', 'assets/sprites/tiles/terrain_sand_ramp_long_c.png');
+      this.load.image('terrain_sand_ramp_short_a', 'assets/sprites/tiles/terrain_sand_ramp_short_a.png');
+      this.load.image('terrain_sand_ramp_short_b', 'assets/sprites/tiles/terrain_sand_ramp_short_b.png');
+      this.load.image('terrain_sand_vertical_bottom', 'assets/sprites/tiles/terrain_sand_vertical_bottom.png');
+      this.load.image('terrain_sand_vertical_middle', 'assets/sprites/tiles/terrain_sand_vertical_middle.png');
+      this.load.image('terrain_sand_vertical_top', 'assets/sprites/tiles/terrain_sand_vertical_top.png');
+      this.load.image('terrain_snow_block', 'assets/sprites/tiles/terrain_snow_block.png');
+      this.load.image('terrain_snow_block_bottom', 'assets/sprites/tiles/terrain_snow_block_bottom.png');
+      this.load.image('terrain_snow_block_bottom_left', 'assets/sprites/tiles/terrain_snow_block_bottom_left.png');
+      this.load.image('terrain_snow_block_bottom_right', 'assets/sprites/tiles/terrain_snow_block_bottom_right.png');
+      this.load.image('terrain_snow_block_center', 'assets/sprites/tiles/terrain_snow_block_center.png');
+      this.load.image('terrain_snow_block_left', 'assets/sprites/tiles/terrain_snow_block_left.png');
+      this.load.image('terrain_snow_block_right', 'assets/sprites/tiles/terrain_snow_block_right.png');
+      this.load.image('terrain_snow_block_top', 'assets/sprites/tiles/terrain_snow_block_top.png');
+      this.load.image('terrain_snow_block_top_left', 'assets/sprites/tiles/terrain_snow_block_top_left.png');
+      this.load.image('terrain_snow_block_top_right', 'assets/sprites/tiles/terrain_snow_block_top_right.png');
+      this.load.image('terrain_snow_cloud', 'assets/sprites/tiles/terrain_snow_cloud.png');
+      this.load.image('terrain_snow_cloud_background', 'assets/sprites/tiles/terrain_snow_cloud_background.png');
+      this.load.image('terrain_snow_cloud_left', 'assets/sprites/tiles/terrain_snow_cloud_left.png');
+      this.load.image('terrain_snow_cloud_middle', 'assets/sprites/tiles/terrain_snow_cloud_middle.png');
+      this.load.image('terrain_snow_cloud_right', 'assets/sprites/tiles/terrain_snow_cloud_right.png');
+      this.load.image('terrain_snow_horizontal_left', 'assets/sprites/tiles/terrain_snow_horizontal_left.png');
+      this.load.image('terrain_snow_horizontal_middle', 'assets/sprites/tiles/terrain_snow_horizontal_middle.png');
+      this.load.image('terrain_snow_horizontal_overhang_left', 'assets/sprites/tiles/terrain_snow_horizontal_overhang_left.png');
+      this.load.image('terrain_snow_horizontal_overhang_right', 'assets/sprites/tiles/terrain_snow_horizontal_overhang_right.png');
+      this.load.image('terrain_snow_horizontal_right', 'assets/sprites/tiles/terrain_snow_horizontal_right.png');
+      this.load.image('terrain_snow_ramp_long_a', 'assets/sprites/tiles/terrain_snow_ramp_long_a.png');
+      this.load.image('terrain_snow_ramp_long_b', 'assets/sprites/tiles/terrain_snow_ramp_long_b.png');
+      this.load.image('terrain_snow_ramp_long_c', 'assets/sprites/tiles/terrain_snow_ramp_long_c.png');
+      this.load.image('terrain_snow_ramp_short_a', 'assets/sprites/tiles/terrain_snow_ramp_short_a.png');
+      this.load.image('terrain_snow_ramp_short_b', 'assets/sprites/tiles/terrain_snow_ramp_short_b.png');
+      this.load.image('terrain_snow_vertical_bottom', 'assets/sprites/tiles/terrain_snow_vertical_bottom.png');
+      this.load.image('terrain_snow_vertical_middle', 'assets/sprites/tiles/terrain_snow_vertical_middle.png');
+      this.load.image('terrain_snow_vertical_top', 'assets/sprites/tiles/terrain_snow_vertical_top.png');
+      this.load.image('terrain_stone_block', 'assets/sprites/tiles/terrain_stone_block.png');
+      this.load.image('terrain_stone_block_bottom', 'assets/sprites/tiles/terrain_stone_block_bottom.png');
+      this.load.image('terrain_stone_block_bottom_left', 'assets/sprites/tiles/terrain_stone_block_bottom_left.png');
+      this.load.image('terrain_stone_block_bottom_right', 'assets/sprites/tiles/terrain_stone_block_bottom_right.png');
+      this.load.image('terrain_stone_block_center', 'assets/sprites/tiles/terrain_stone_block_center.png');
+      this.load.image('terrain_stone_block_left', 'assets/sprites/tiles/terrain_stone_block_left.png');
+      this.load.image('terrain_stone_block_right', 'assets/sprites/tiles/terrain_stone_block_right.png');
+      this.load.image('terrain_stone_block_top', 'assets/sprites/tiles/terrain_stone_block_top.png');
+      this.load.image('terrain_stone_block_top_left', 'assets/sprites/tiles/terrain_stone_block_top_left.png');
+      this.load.image('terrain_stone_block_top_right', 'assets/sprites/tiles/terrain_stone_block_top_right.png');
+      this.load.image('terrain_stone_cloud', 'assets/sprites/tiles/terrain_stone_cloud.png');
+      this.load.image('terrain_stone_cloud_background', 'assets/sprites/tiles/terrain_stone_cloud_background.png');
+      this.load.image('terrain_stone_cloud_left', 'assets/sprites/tiles/terrain_stone_cloud_left.png');
+      this.load.image('terrain_stone_cloud_middle', 'assets/sprites/tiles/terrain_stone_cloud_middle.png');
+      this.load.image('terrain_stone_cloud_right', 'assets/sprites/tiles/terrain_stone_cloud_right.png');
+      this.load.image('terrain_stone_horizontal_left', 'assets/sprites/tiles/terrain_stone_horizontal_left.png');
+      this.load.image('terrain_stone_horizontal_middle', 'assets/sprites/tiles/terrain_stone_horizontal_middle.png');
+      this.load.image('terrain_stone_horizontal_overhang_left', 'assets/sprites/tiles/terrain_stone_horizontal_overhang_left.png');
+      this.load.image('terrain_stone_horizontal_overhang_right', 'assets/sprites/tiles/terrain_stone_horizontal_overhang_right.png');
+      this.load.image('terrain_stone_horizontal_right', 'assets/sprites/tiles/terrain_stone_horizontal_right.png');
+      this.load.image('terrain_stone_ramp_long_a', 'assets/sprites/tiles/terrain_stone_ramp_long_a.png');
+      this.load.image('terrain_stone_ramp_long_b', 'assets/sprites/tiles/terrain_stone_ramp_long_b.png');
+      this.load.image('terrain_stone_ramp_long_c', 'assets/sprites/tiles/terrain_stone_ramp_long_c.png');
+      this.load.image('terrain_stone_ramp_short_a', 'assets/sprites/tiles/terrain_stone_ramp_short_a.png');
+      this.load.image('terrain_stone_ramp_short_b', 'assets/sprites/tiles/terrain_stone_ramp_short_b.png');
+      this.load.image('terrain_stone_vertical_bottom', 'assets/sprites/tiles/terrain_stone_vertical_bottom.png');
+      this.load.image('terrain_stone_vertical_middle', 'assets/sprites/tiles/terrain_stone_vertical_middle.png');
+      this.load.image('terrain_stone_vertical_top', 'assets/sprites/tiles/terrain_stone_vertical_top.png');
+      this.load.image('torch_off', 'assets/sprites/tiles/torch_off.png');
+      this.load.image('torch_on_a', 'assets/sprites/tiles/torch_on_a.png');
+      this.load.image('torch_on_b', 'assets/sprites/tiles/torch_on_b.png');
+      this.load.image('water', 'assets/sprites/tiles/water.png');
+      this.load.image('water_top', 'assets/sprites/tiles/water_top.png');
+      this.load.image('water_top_low', 'assets/sprites/tiles/water_top_low.png');
+      this.load.image('weight', 'assets/sprites/tiles/weight.png');
+      this.load.image('window', 'assets/sprites/tiles/window.png');
     }
 
-    // ── CREATE — runs once after preload, builds the scene ─
+    // ── CREATE — gym level sandbox ─────────────────────────
     function create() {
+      const T       = 64;
+      const WORLD_W = 1600;
+      const WORLD_H = 900;
 
-      // Background — stretched to fill canvas
-      this.add.image(400, 225, 'bg').setDisplaySize(800, 450);
+      // Expand physics world to match level size
+      // (default is canvas size — player would stop at 1280×720 otherwise)
+      this.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
 
-      // Platform group — static means it doesn't move or fall
-      platforms = this.physics.add.staticGroup();
+      // Background is the solid #1a1a2e set in Phaser config — no tileSprite
 
-      // Ground — invisible rectangle at the bottom of the screen
-      // We'll replace this with real tiles in Phase 2
-      const ground = this.add.rectangle(400, 440, 800, 20, 0x000000, 0);
-      this.physics.add.existing(ground, true); // true = static body
-      platforms.add(ground);
+      // ── Static groups ──────────────────────────────────────
+      // Separate groups allow future per-layer logic (e.g. one-way platforms,
+      // hazard tiles) without touching ground collision.
+      groundLayer    = this.physics.add.staticGroup();
+      platformsGroup = this.physics.add.staticGroup();
 
-      // Player — starts at left side, above the ground
-      player = this.physics.add.sprite(100, 350, 'idle');
-      player.setCollideWorldBounds(true); // stops player walking off screen edges
+      // place(group, cx, cy, key) — places one tile by its pixel centre
+      const place = (group, cx, cy, key) => {
+        const s = group.create(cx, cy, key);
+        s.refreshBody();
+      };
 
-      // Collider — makes player land on platforms instead of falling through
-      this.physics.add.collider(player, platforms);
+      // platform(x, y, count) — places a floating ledge into platformsGroup.
+      // x = left pixel edge of first tile, y = tile centre, count = tile count.
+      const platform = (x, y, count) => {
+        for (let i = 0; i < count; i++) {
+          const cx  = x + 32 + i * T;
+          const key = i === 0         ? 'terrain_purple_horizontal_left'
+                    : i === count - 1 ? 'terrain_purple_horizontal_right'
+                    :                   'terrain_purple_horizontal_middle';
+          place(platformsGroup, cx, y, key);
+        }
+      };
 
-      // Keyboard input
+      // ── Ground — y = WORLD_H - T/2 = 900 - 32 = 868 ──────
+      // Tile centre at 868 → top surface at 836, bottom surface at 900.
+      // Sits flush at the world bottom — no visible gap below.
+      const GY = WORLD_H - T / 2;   // 868
+      place(groundLayer, 32, GY, 'terrain_purple_block_top_left');
+      for (let i = 1; i <= 23; i++) place(groundLayer, 32 + i * T, GY, 'terrain_purple_block_top');
+      place(groundLayer, 32 + 24 * T, GY, 'terrain_purple_block_top_right');
+
+      // ── Floating platforms (left-edge x, centre y, tile count) ──
+      platform( 200, 650, 4);   // A — low jump test
+      platform( 450, 500, 4);   // B — medium jump test
+      platform( 750, 380, 3);   // C — high jump test
+      platform(1050, 500, 4);   // D — descend test
+      platform(1300, 650, 4);   // E — return path
+
+      // Player — 96×128 femaleAdventurer, spawns above ground on the left.
+      // Ground surface = GY - 32 = 836. Player half-height = 64.
+      // Spawn y = 836 - 64 = 772 puts the player exactly on the ground.
+      player = this.physics.add.sprite(100, 772, 'player');
+      player.setCollideWorldBounds(true);
+
+      // Separate colliders — one per layer
+      this.physics.add.collider(player, groundLayer);
+      this.physics.add.collider(player, platformsGroup);
+
+      // ── Animations — frame indices from assets.json spritesheets[0].animGroups ──
+      this.anims.create({
+        key: 'idle',
+        frames: this.anims.generateFrameNumbers('player', { frames: [0] }),
+        frameRate: 4,
+        repeat: -1
+      });
+      this.anims.create({
+        key: 'run',
+        frames: this.anims.generateFrameNumbers('player', { frames: [24, 25, 26] }),
+        frameRate: 12,
+        repeat: -1
+      });
+      this.anims.create({
+        key: 'jump',
+        frames: this.anims.generateFrameNumbers('player', { frames: [1] }),
+        frameRate: 4,
+        repeat: 0
+      });
+
+      // Camera — follows player, bounded to world size
+      this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
+      this.cameras.main.startFollow(player, true, 0.1, 0.1);
+
+      // Input — arrow keys + space (createCursorKeys), plus WASD
       cursors = this.input.keyboard.createCursorKeys();
+      wasd = this.input.keyboard.addKeys({
+        up:    Phaser.Input.Keyboard.KeyCodes.W,
+        left:  Phaser.Input.Keyboard.KeyCodes.A,
+        right: Phaser.Input.Keyboard.KeyCodes.D
+      });
+
+      // G key — toggles arcade physics hitbox overlay at runtime
+      keyG = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.G);
+
+      // ── Debug overlay — fixed to camera, top-right corner ─
+      // setScrollFactor(0) keeps it in screen space while the camera pans
+      debugText = this.add.text(1270, 10, '', {
+        fontFamily: 'monospace',
+        fontSize: '13px',
+        color: '#00ffcc',
+        backgroundColor: '#00000099',
+        padding: { x: 10, y: 8 },
+        lineSpacing: 4
+      })
+        .setScrollFactor(0)
+        .setOrigin(1, 0)     // anchor top-right so text grows left/downward
+        .setDepth(100);
     }
 
-    // ── UPDATE — runs every frame (60fps) ──────────────────
-    function update() {
+    // ── UPDATE — runs every frame ──────────────────────────
+    function update(time, delta) {
       const onGround = player.body.blocked.down;
 
-      // Left / Right movement
-      if (cursors.left.isDown) {
-        player.setVelocityX(-220);
-        player.setFlipX(true);             // flip sprite to face left
-        player.setTexture(onGround ? 'walk_a' : 'jump');
+      // ── Coyote time ──────────────────────────────────────
+      // Reset the 150ms window whenever the player is grounded.
+      // Tick it down while airborne so the window expires naturally.
+      // Consuming coyoteTimer = 0 on jump prevents a second mid-air jump.
+      if (onGround) {
+        coyoteTimer = COYOTE_MS;
+      } else {
+        coyoteTimer = Math.max(0, coyoteTimer - delta);
+      }
 
-      } else if (cursors.right.isDown) {
-        player.setVelocityX(220);
+      const canJump = coyoteTimer > 0;
+
+      // ── Horizontal movement ──────────────────────────────
+      const goLeft  = cursors.left.isDown  || wasd.left.isDown;
+      const goRight = cursors.right.isDown || wasd.right.isDown;
+
+      if (goLeft) {
+        player.setVelocityX(-MOVE_SPEED);
+        player.setFlipX(true);
+      } else if (goRight) {
+        player.setVelocityX(MOVE_SPEED);
         player.setFlipX(false);
-        player.setTexture(onGround ? 'walk_a' : 'jump');
-
       } else {
         player.setVelocityX(0);
-        player.setTexture(onGround ? 'idle' : 'jump');
       }
 
-      // Jump — only if standing on ground
-      if (cursors.up.isDown && onGround) {
-        player.setVelocityY(-520);
+      // ── Jump ─────────────────────────────────────────────
+      // JustDown fires once per key press, preventing hold-to-spam
+      const jumpPressed =
+        Phaser.Input.Keyboard.JustDown(cursors.up)    ||
+        Phaser.Input.Keyboard.JustDown(cursors.space) ||
+        Phaser.Input.Keyboard.JustDown(wasd.up);
+
+      if (jumpPressed && canJump) {
+        player.setVelocityY(JUMP_VEL);
+        coyoteTimer = 0;  // consume the window — no double-jump
       }
 
-      // Simple walk animation — alternate between walk_a and walk_b
-      if (player.body.velocity.x !== 0 && onGround) {
-        // Swap texture every 8 frames
-        if (Math.floor(this.time.now / 133) % 2 === 0) {
-          player.setTexture('walk_a');
-        } else {
-          player.setTexture('walk_b');
+      // ── Animation state ───────────────────────────────────
+      // true = don't restart if already playing (prevents flicker on held keys)
+      const animState = !onGround ? 'jump'
+                      : player.body.velocity.x !== 0 ? 'run'
+                      : 'idle';
+
+      player.anims.play(animState, true);
+
+      // ── G key — toggle physics hitbox overlay ─────────────
+      if (Phaser.Input.Keyboard.JustDown(keyG)) {
+        this.physics.world.drawDebug = !this.physics.world.drawDebug;
+        if (!this.physics.world.drawDebug) {
+          this.physics.world.debugGraphic.clear();
         }
       }
+
+      // ── Debug overlay — updated every frame ───────────────
+      const vx     = Math.round(player.body.velocity.x);
+      const vy     = Math.round(player.body.velocity.y);
+      const px     = Math.round(player.x);
+      const py     = Math.round(player.y);
+      const facing = player.flipX ? 'left' : 'right';
+
+      debugText.setText(
+        `state:    ${animState}\n` +
+        `grounded: ${onGround ? 'yes' : 'no'}\n` +
+        `vel:      x:${String(vx).padStart(5)}  y:${String(vy).padStart(5)}\n` +
+        `pos:      x:${String(px).padStart(5)}  y:${String(py).padStart(5)}\n` +
+        `facing:   ${facing}\n` +
+        `\n[G] toggle hitboxes`
+      );
     }
   </script>
 
