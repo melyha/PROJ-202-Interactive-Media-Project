@@ -51,9 +51,9 @@
     const game = new Phaser.Game(config);
 
     // ── CONSTANTS ─────────────────────────────────────────
-    const MOVE_SPEED   = 250;
-    const JUMP_VEL     = -600;
-    const COYOTE_MS    = 150;   // grace window after leaving a platform edge
+    const MOVE_SPEED = 250;
+    const JUMP_VEL = -600;
+    const COYOTE_MS = 150;   // grace window after leaving a platform edge
 
     // ── VARIABLES ─────────────────────────────────────────
     let player;
@@ -395,7 +395,7 @@
 
     // ── CREATE — gym level sandbox ─────────────────────────
     function create() {
-      const T       = 64;
+      const T = 64;
       const WORLD_W = 1600;
       const WORLD_H = 900;
 
@@ -408,7 +408,7 @@
       // ── Static groups ──────────────────────────────────────
       // Separate groups allow future per-layer logic (e.g. one-way platforms,
       // hazard tiles) without touching ground collision.
-      groundLayer    = this.physics.add.staticGroup();
+      groundLayer = this.physics.add.staticGroup();
       platformsGroup = this.physics.add.staticGroup();
 
       // place(group, cx, cy, key) — places one tile by its pixel centre
@@ -421,10 +421,10 @@
       // x = left pixel edge of first tile, y = tile centre, count = tile count.
       const platform = (x, y, count) => {
         for (let i = 0; i < count; i++) {
-          const cx  = x + 32 + i * T;
-          const key = i === 0         ? 'terrain_purple_horizontal_left'
-                    : i === count - 1 ? 'terrain_purple_horizontal_right'
-                    :                   'terrain_purple_horizontal_middle';
+          const cx = x + 32 + i * T;
+          const key = i === 0 ? 'terrain_purple_horizontal_left'
+            : i === count - 1 ? 'terrain_purple_horizontal_right'
+              : 'terrain_purple_horizontal_middle';
           place(platformsGroup, cx, y, key);
         }
       };
@@ -438,9 +438,9 @@
       place(groundLayer, 32 + 24 * T, GY, 'terrain_purple_block_top_right');
 
       // ── Floating platforms (left-edge x, centre y, tile count) ──
-      platform( 200, 650, 4);   // A — low jump test
-      platform( 450, 500, 4);   // B — medium jump test
-      platform( 750, 380, 3);   // C — high jump test
+      platform(200, 650, 4);   // A — low jump test
+      platform(450, 500, 4);   // B — medium jump test
+      platform(750, 380, 3);   // C — high jump test
       platform(1050, 500, 4);   // D — descend test
       platform(1300, 650, 4);   // E — return path
 
@@ -481,8 +481,8 @@
       // Input — arrow keys + space (createCursorKeys), plus WASD
       cursors = this.input.keyboard.createCursorKeys();
       wasd = this.input.keyboard.addKeys({
-        up:    Phaser.Input.Keyboard.KeyCodes.W,
-        left:  Phaser.Input.Keyboard.KeyCodes.A,
+        up: Phaser.Input.Keyboard.KeyCodes.W,
+        left: Phaser.Input.Keyboard.KeyCodes.A,
         right: Phaser.Input.Keyboard.KeyCodes.D
       });
 
@@ -521,7 +521,7 @@
       const canJump = coyoteTimer > 0;
 
       // ── Horizontal movement ──────────────────────────────
-      const goLeft  = cursors.left.isDown  || wasd.left.isDown;
+      const goLeft = cursors.left.isDown || wasd.left.isDown;
       const goRight = cursors.right.isDown || wasd.right.isDown;
 
       if (goLeft) {
@@ -537,7 +537,7 @@
       // ── Jump ─────────────────────────────────────────────
       // JustDown fires once per key press, preventing hold-to-spam
       const jumpPressed =
-        Phaser.Input.Keyboard.JustDown(cursors.up)    ||
+        Phaser.Input.Keyboard.JustDown(cursors.up) ||
         Phaser.Input.Keyboard.JustDown(cursors.space) ||
         Phaser.Input.Keyboard.JustDown(wasd.up);
 
@@ -549,8 +549,8 @@
       // ── Animation state ───────────────────────────────────
       // true = don't restart if already playing (prevents flicker on held keys)
       const animState = !onGround ? 'jump'
-                      : player.body.velocity.x !== 0 ? 'run'
-                      : 'idle';
+        : player.body.velocity.x !== 0 ? 'run'
+          : 'idle';
 
       player.anims.play(animState, true);
 
@@ -563,10 +563,10 @@
       }
 
       // ── Debug overlay — updated every frame ───────────────
-      const vx     = Math.round(player.body.velocity.x);
-      const vy     = Math.round(player.body.velocity.y);
-      const px     = Math.round(player.x);
-      const py     = Math.round(player.y);
+      const vx = Math.round(player.body.velocity.x);
+      const vy = Math.round(player.body.velocity.y);
+      const px = Math.round(player.x);
+      const py = Math.round(player.y);
       const facing = player.flipX ? 'left' : 'right';
 
       debugText.setText(
@@ -578,6 +578,7 @@
         `\n[G] toggle hitboxes`
       );
     }
+
   </script>
 
 </body>
