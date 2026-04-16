@@ -4,6 +4,8 @@
 <head>
   <meta charset="utf-8" />
   <title>Enigma</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -65,8 +67,29 @@
     let debugText;              // HUD text object (fixed to camera)
     let keyG;                   // G key — toggles physics hitbox overlay
 
+    // ── Parallax background layers ────────────────────────
+    let bgLayers = [];   // [{sprite, factor}, ...] updated each frame
+
+    // ── Attack system ──────────────────────────────────────
+    let enemyGroup;
+    let attackZone;
+    let attackState  = 'ready';   // 'ready' | 'active' | 'cooldown'
+    let attackIsKick = false;
+    let hitCount     = 0;
+    let keyJ, keyK;
+    let scene;
+
     // ── PRELOAD ───────────────────────────────────────────
     function preload() {
+
+      // ── Background layers — all 256×256px, tiled horizontally ──
+      this.load.image('background_solid_sky',   'assets/backgrounds/background_solid_sky.png');
+      this.load.image('background_clouds',      'assets/backgrounds/background_clouds.png');
+      this.load.image('background_fade_hills',  'assets/backgrounds/background_fade_hills.png');
+      this.load.image('background_color_hills', 'assets/backgrounds/background_color_hills.png');
+      this.load.image('background_fade_trees',  'assets/backgrounds/background_fade_trees.png');
+      this.load.image('background_color_trees', 'assets/backgrounds/background_color_trees.png');
+      this.load.image('background_solid_grass', 'assets/backgrounds/background_solid_grass.png');
 
       // ── Player spritesheet — femaleAdventurer, 96×128 px per frame ──
       // From assets.json spritesheets[0]: 45 frames, no spacing
@@ -395,6 +418,7 @@
 
     // ── CREATE — gym level sandbox ─────────────────────────
     function create() {
+      scene = this;
       const T = 64;
       const WORLD_W = 1600;
       const WORLD_H = 900;
@@ -403,7 +427,55 @@
       // (default is canvas size — player would stop at 1280×720 otherwise)
       this.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
 
-      // Background is the solid #1a1a2e set in Phaser config — no tileSprite
+      // ── Parallax backgrounds — added FIRST so they render behind everything ──
+      //
+      // tileSprite(x, y, width, height, key)
+      //   width  3200 = 2× world width — absorbs any sprite drift from scrollFactor
+      //   height sized per layer so each covers its visual zone
+      //
+      // setScrollFactor(f) — sprite position drifts at f× camera speed (parallax)
+      // tilePositionX      — texture offset also updated each frame in update()
+      //
+      // Y positions are tuned for the typical camera state when the player is
+      // near ground level: camera.scrollY ≈ 180 (world 900 − canvas 720).
+      // screenY = worldY − camera.scrollY × factor
+      //
+      // Sky uses factor 0 so its (x, y) are pure screen coordinates.
+      // All other layers use world coordinates that produce the right screen
+      // position at scrollY = 180.
+
+      const addBg = (key, factor, wx, wy, w, h) => {
+        const s = this.add.tileSprite(wx, wy, w, h, key);
+        s.setScrollFactor(factor);
+        bgLayers.push({ sprite: s, factor });
+      };
+
+      // 1. Sky — fixed, fills entire canvas (scrollFactor 0 = screen-space position)
+      addBg('background_solid_sky',   0,    640,  360, 3200, 720);
+
+      // 2. Clouds — very slow drift, upper ~60% of screen
+      //    worldY=200: screenY = 200 − 180×0.05 = 191; covers −25..407
+      addBg('background_clouds',      0.05, 1600, 200, 3200, 432);
+
+      // 3. Fade hills — mid distance (fade-to-transparent bottom blends with next layer)
+      //    worldY=498: screenY = 498 − 180×0.1 = 480; covers 280..680
+      addBg('background_fade_hills',  0.1,  1600, 498, 3200, 400);
+
+      // 4. Color hills — slightly closer
+      //    worldY=527: screenY = 527 − 180×0.15 = 500; covers 300..700
+      addBg('background_color_hills', 0.15, 1600, 527, 3200, 400);
+
+      // 5. Fade trees — near distance
+      //    worldY=585: screenY = 585 − 180×0.25 = 540; covers 340..740
+      addBg('background_fade_trees',  0.25, 1600, 585, 3200, 400);
+
+      // 6. Color trees — closest background layer
+      //    worldY=623: screenY = 623 − 180×0.35 = 560; covers 360..760
+      addBg('background_color_trees', 0.35, 1600, 623, 3200, 400);
+
+      // 7. Grass strip — ground level, flush to screen bottom at scrollY=180
+      //    worldY=746: screenY = 746 − 180×0.5 = 656; covers 592..720 ✓
+      addBg('background_solid_grass', 0.5,  1600, 746, 3200, 128);
 
       // ── Static groups ──────────────────────────────────────
       // Separate groups allow future per-layer logic (e.g. one-way platforms,
@@ -469,23 +541,93 @@
       this.physics.add.collider(player, platformsGroup);
 
       // ── Animations — frame indices from assets.json spritesheets[0].animGroups ──
-      this.anims.create({
-        key: 'idle',
-        frames: this.anims.generateFrameNumbers('player', { frames: [0] }),
-        frameRate: 4,
-        repeat: -1
+      const anim = (key, frames, frameRate, repeat) =>
+        this.anims.create({ key, frames: this.anims.generateFrameNumbers('player', { frames }), frameRate, repeat });
+      anim('idle',   [0],                         6, -1);
+      anim('jump',   [1],                         6,  0);
+      anim('fall',   [2],                         6, -1);
+      anim('run',    [24, 25, 26],               12, -1);
+      anim('walk',   [36,37,38,39,40,41,42,43], 10, -1);
+      anim('attack', [27, 28, 29],               10,  0);
+      anim('kick',   [19],                       10,  0);
+      anim('hurt',   [33],                        6,  0);
+
+      // ── Spawn zone indicator — dashed cyan rect at player start ──
+      const spawnGfx = this.add.graphics();
+      spawnGfx.lineStyle(2, 0x00ffcc, 0.6);
+      const sx = 100, sy = 788, sw = 80, sh = 100;
+      const dash = 6, gap = 4;
+      const dashLine = (x1, y1, x2, y2) => {
+        const len = Math.hypot(x2 - x1, y2 - y1);
+        const nx = (x2 - x1) / len, ny = (y2 - y1) / len;
+        let d = 0, drawing = true;
+        while (d < len) {
+          const seg = Math.min(drawing ? dash : gap, len - d);
+          if (drawing) {
+            spawnGfx.beginPath();
+            spawnGfx.moveTo(x1 + nx * d, y1 + ny * d);
+            spawnGfx.lineTo(x1 + nx * (d + seg), y1 + ny * (d + seg));
+            spawnGfx.strokePath();
+          }
+          d += seg; drawing = !drawing;
+        }
+      };
+      dashLine(sx - sw/2, sy - sh/2, sx + sw/2, sy - sh/2);
+      dashLine(sx + sw/2, sy - sh/2, sx + sw/2, sy + sh/2);
+      dashLine(sx + sw/2, sy + sh/2, sx - sw/2, sy + sh/2);
+      dashLine(sx - sw/2, sy + sh/2, sx - sw/2, sy - sh/2);
+      this.add.text(sx, sy - sh/2 - 14, 'SPAWN', {
+        fontFamily: '"Press Start 2P"', fontSize: '9px', color: '#00ffcc'
+      }).setOrigin(0.5, 1).setAlpha(0.6);
+
+      // ── Fake enemies (practice targets) ──────────────────
+      // Red 48×64 rectangles with static physics bodies — sit on platforms A/B/C
+      const enemyGfx = this.make.graphics({ add: false });
+      enemyGfx.fillStyle(0xcc2222, 1);
+      enemyGfx.fillRect(0, 0, 48, 64);
+      enemyGfx.lineStyle(2, 0xff4444, 1);
+      enemyGfx.strokeRect(0, 0, 48, 64);
+      enemyGfx.generateTexture('enemyTex', 48, 64);
+      enemyGfx.destroy();
+
+      enemyGroup = this.physics.add.staticGroup();
+      // Enemy centre y = platform top surface - enemy half-height
+      // Platform top = platformCentreY - T/2;  enemy half-height = 32
+      const enemySpots = [
+        { x: 328, y: (650 - 32) - 32 },   // Platform A (y=650)
+        { x: 578, y: (500 - 32) - 32 },   // Platform B (y=500)
+        { x: 846, y: (380 - 32) - 32 },   // Platform C (y=380)
+      ];
+      enemySpots.forEach(({ x, y }) => {
+        const e = enemyGroup.create(x, y, 'enemyTex');
+        e.isBeingHit = false;
+        e.refreshBody();
       });
-      this.anims.create({
-        key: 'run',
-        frames: this.anims.generateFrameNumbers('player', { frames: [24, 25, 26] }),
-        frameRate: 12,
-        repeat: -1
-      });
-      this.anims.create({
-        key: 'jump',
-        frames: this.anims.generateFrameNumbers('player', { frames: [1] }),
-        frameRate: 4,
-        repeat: 0
+
+      // ── Attack zone (invisible dynamic trigger) ───────────
+      const atkGfx = this.make.graphics({ add: false });
+      atkGfx.fillStyle(0xffffff, 1);
+      atkGfx.fillRect(0, 0, 1, 1);
+      atkGfx.generateTexture('attackTex', 1, 1);
+      atkGfx.destroy();
+
+      attackZone = this.physics.add.image(0, 0, 'attackTex');
+      attackZone.setAlpha(0);
+      attackZone.body.setAllowGravity(false);
+      attackZone.body.enable = false;
+
+      this.physics.add.overlap(attackZone, enemyGroup, (zone, enemy) => {
+        if (enemy.isBeingHit) return;
+        enemy.isBeingHit = true;
+        hitCount++;
+        scene.tweens.add({
+          targets: enemy,
+          alpha: 0,
+          duration: 60,
+          yoyo: true,
+          repeat: 2,
+          onComplete: () => { enemy.setAlpha(1); enemy.isBeingHit = false; }
+        });
       });
 
       // Camera — follows player, bounded to world size
@@ -502,6 +644,19 @@
 
       // G key — toggles arcade physics hitbox overlay at runtime
       keyG = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.G);
+
+      // J = attack, K = kick
+      keyJ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J);
+      keyK = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
+
+      // When an attack animation finishes: disable the hitbox, enter cooldown, then return to ready
+      player.on('animationcomplete', (animObj) => {
+        if (animObj.key === 'attack' || animObj.key === 'kick') {
+          attackZone.body.enable = false;
+          attackState = 'cooldown';
+          scene.time.delayedCall(200, () => { attackState = 'ready'; });
+        }
+      });
 
       // ── Debug overlay — fixed to camera, top-right corner ─
       // setScrollFactor(0) keeps it in screen space while the camera pans
@@ -522,20 +677,52 @@
     function update(time, delta) {
       const onGround = player.body.blocked.down;
 
+      // ── Parallax — shift tile texture to match camera position ──
+      // tilePositionX = scrollX × factor: far layers barely move, near layers move more.
+      // This works in concert with setScrollFactor() set on each sprite in create().
+      const camX = this.cameras.main.scrollX;
+      for (const { sprite, factor } of bgLayers) {
+        sprite.tilePositionX = camX * factor;
+      }
+
       // ── Coyote time ──────────────────────────────────────
-      // Reset the 150ms window whenever the player is grounded.
-      // Tick it down while airborne so the window expires naturally.
-      // Consuming coyoteTimer = 0 on jump prevents a second mid-air jump.
       if (onGround) {
         coyoteTimer = COYOTE_MS;
       } else {
         coyoteTimer = Math.max(0, coyoteTimer - delta);
       }
-
       const canJump = coyoteTimer > 0;
 
+      // ── Attack triggers ───────────────────────────────────
+      // Only fire when ready; animationcomplete listener handles the reset
+      if (attackState === 'ready') {
+        if (Phaser.Input.Keyboard.JustDown(keyJ)) {
+          attackState = 'active';
+          attackIsKick = false;
+          player.anims.play('attack', true);
+          attackZone.body.enable = true;
+        } else if (Phaser.Input.Keyboard.JustDown(keyK)) {
+          attackState = 'active';
+          attackIsKick = true;
+          player.anims.play('kick', true);
+          attackZone.body.enable = true;
+        }
+      }
+
+      // ── Attack zone tracking ──────────────────────────────
+      // Each frame while active, keep the hitbox in front of the player
+      if (attackState === 'active') {
+        const range = attackIsKick ? 60 : 80;
+        const dir = player.flipX ? -1 : 1;
+        attackZone.setPosition(
+          player.x + dir * (player.body.halfWidth + range / 2),
+          player.y + 10
+        );
+        attackZone.body.setSize(range, 60, true);
+      }
+
       // ── Horizontal movement ──────────────────────────────
-      const goLeft = cursors.left.isDown || wasd.left.isDown;
+      const goLeft  = cursors.left.isDown  || wasd.left.isDown;
       const goRight = cursors.right.isDown || wasd.right.isDown;
 
       if (goLeft) {
@@ -549,24 +736,23 @@
       }
 
       // ── Jump ─────────────────────────────────────────────
-      // JustDown fires once per key press, preventing hold-to-spam
       const jumpPressed =
-        Phaser.Input.Keyboard.JustDown(cursors.up) ||
+        Phaser.Input.Keyboard.JustDown(cursors.up)    ||
         Phaser.Input.Keyboard.JustDown(cursors.space) ||
         Phaser.Input.Keyboard.JustDown(wasd.up);
 
       if (jumpPressed && canJump) {
         player.setVelocityY(JUMP_VEL);
-        coyoteTimer = 0;  // consume the window — no double-jump
+        coyoteTimer = 0;
       }
 
-      // ── Animation state ───────────────────────────────────
-      // true = don't restart if already playing (prevents flicker on held keys)
-      const animState = !onGround ? 'jump'
-        : player.body.velocity.x !== 0 ? 'run'
-          : 'idle';
-
-      player.anims.play(animState, true);
+      // ── Animation state (gated — don't override attack/kick) ─
+      if (attackState === 'ready') {
+        const moveAnim = !onGround              ? 'jump'
+                       : player.body.velocity.x !== 0 ? 'run'
+                       : 'idle';
+        player.anims.play(moveAnim, true);
+      }
 
       // ── G key — toggle physics hitbox overlay ─────────────
       if (Phaser.Input.Keyboard.JustDown(keyG)) {
@@ -583,13 +769,20 @@
       const py = Math.round(player.y);
       const facing = player.flipX ? 'left' : 'right';
 
+      // Derive display state string
+      let stateStr;
+      if (attackState === 'active')   stateStr = attackIsKick ? 'kick' : 'attack';
+      else if (attackState === 'cooldown') stateStr = 'cooldown';
+      else stateStr = !onGround ? 'jump' : player.body.velocity.x !== 0 ? 'run' : 'idle';
+
       debugText.setText(
-        `state:    ${animState}\n` +
+        `state:    ${stateStr}\n` +
         `grounded: ${onGround ? 'yes' : 'no'}\n` +
         `vel:      x:${String(vx).padStart(5)}  y:${String(vy).padStart(5)}\n` +
         `pos:      x:${String(px).padStart(5)}  y:${String(py).padStart(5)}\n` +
         `facing:   ${facing}\n` +
-        `\n[G] toggle hitboxes`
+        `hits:     ${hitCount}\n` +
+        `\n[J] attack  [K] kick\n[G] toggle hitboxes`
       );
     }
 
