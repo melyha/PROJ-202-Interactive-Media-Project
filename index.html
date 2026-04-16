@@ -444,10 +444,24 @@
       platform(1050, 500, 4);   // D — descend test
       platform(1300, 650, 4);   // E — return path
 
-      // Player — 96×128 femaleAdventurer, spawns above ground on the left.
-      // Ground surface = GY - 32 = 836. Player half-height = 64.
-      // Spawn y = 836 - 64 = 772 puts the player exactly on the ground.
-      player = this.physics.add.sprite(100, 772, 'player');
+      // Player — 96×128 femaleAdventurer spritesheet, displayed at 0.75 scale → 72×96px.
+      //
+      // Body math (Phaser applies scale to setSize args):
+      //   body.width   = sourceW  * 0.75 = 56  * 0.75 = 42px
+      //   body.height  = sourceH  * 0.75 = 104 * 0.75 = 78px
+      //   body.x       = x - 36 + offsetX * 0.75  → centered on sprite
+      //   body.bottom  = y - 48 + (offsetY + sourceH) * 0.75
+      //                = y - 48 + 128 * 0.75 = y + 48  ← exact sprite bottom
+      //
+      // Constraint: offsetY + sourceH = frameH (128) ensures feet land on surfaces.
+      // offsetY = 24 excludes the head (~18px world); offsetX = 20 centers the body.
+      //
+      // Spawn y: ground surface = GY - 32 = 836. body.bottom = y + 48.
+      // y = 836 - 48 = 788 places player standing exactly on ground at start.
+      player = this.physics.add.sprite(100, 788, 'player');
+      player.setScale(0.75);
+      player.body.setSize(56, 104);  // frame-space: 42×78px world
+      player.body.setOffset(20, 24); // center X; push body down past head
       player.setCollideWorldBounds(true);
 
       // Separate colliders — one per layer
