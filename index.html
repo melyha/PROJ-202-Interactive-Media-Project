@@ -100,6 +100,12 @@
     let hudCoinsText;
     let hudGemsText;
     let hudKeysText;
+    let hudHeartIcon  = null;   // reference to heart icon (for blinking)
+    let hudHeartBlink = null;   // active blink tween
+    let vignetteGfx   = null;   // red edge vignette (last-life warning)
+
+    // ── Death state ──────────────────────────────────────────
+    let isDead = false;
 
     // ── TILE ROUTING ──────────────────────────────────────────
     function getTileCategory(key) {
@@ -147,33 +153,107 @@
 
     function updateHudLives() {
       if (hudLivesText) hudLivesText.setText(String(playerLives));
+      if (playerLives > 1) clearLastLifeWarning();
     }
 
-    function triggerGameOver() {
-      if (levelComplete) return;
+    function clearLastLifeWarning() {
+      if (hudHeartBlink) {
+        hudHeartBlink.stop();
+        hudHeartBlink = null;
+        if (hudHeartIcon) hudHeartIcon.setAlpha(1);
+      }
+      if (vignetteGfx) {
+        vignetteGfx.destroy();
+        vignetteGfx = null;
+      }
+    }
+
+    function triggerDeathSequence() {
+      if (isDead) return;
+      isDead = true;
       levelComplete = true;
-      player.setVelocity(0, 0);
-      player.body.enable = false;
-      const cam = scene.cameras.main;
-      scene.add.text(
-        cam.scrollX + 640, cam.scrollY + 360,
-        'GAME OVER',
-        { fontFamily: '"Press Start 2P"', fontSize: '48px', color: '#ff0000',
-          stroke: '#000000', strokeThickness: 6 }
-      ).setOrigin(0.5).setDepth(50);
-      console.log('GAME OVER');
+
+      // Freeze player — stop velocity and prevent physics from moving it
+      player.body.setVelocity(0, 0);
+      player.body.moves = false;
+
+      // Play fallDown animation (frame 44 = "fallDown" in spritesheet)
+      player.anims.play('fallDown', true);
+
+      // Screen shake
+      scene.cameras.main.shake(400, 0.02);
+
+      // Black overlay: fades from 0 → 0.7 over 1000ms (depth 45 = below text at 50)
+      const overlay = scene.add.rectangle(640, 360, 1280, 720, 0x000000)
+        .setScrollFactor(0).setDepth(45).setAlpha(0);
+      scene.tweens.add({ targets: overlay, alpha: 0.7, duration: 1000 });
+
+      // After 1500ms: GAME OVER text fades in (depth 50 = above overlay)
+      scene.time.delayedCall(1500, () => {
+        const goText = scene.add.text(640, 310, 'GAME OVER', {
+          fontFamily: '"Press Start 2P"',
+          fontSize: '48px',
+          color: '#ff0000',
+          stroke: '#000000',
+          strokeThickness: 6
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlpha(0);
+
+        const retryText = scene.add.text(640, 410, 'PRESS SPACE TO RETRY', {
+          fontFamily: '"Press Start 2P"',
+          fontSize: '14px',
+          color: '#ffffff',
+          stroke: '#000000',
+          strokeThickness: 3
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlpha(0);
+
+        scene.tweens.add({ targets: [goText, retryText], alpha: 1, duration: 500 });
+
+        // SPACE restarts the scene (scene.restart() calls create() again;
+        // global vars are reset at the top of create())
+        scene.input.keyboard.once('keydown-SPACE', () => {
+          scene.scene.restart();
+        });
+      });
     }
 
     function onHazard(playerObj, hazard) {
+      // isInvincible set as FIRST thing — guards against overlap firing multiple times per step
       if (isInvincible || levelComplete) return;
       isInvincible = true;
       playerLives--;
       updateHudLives();
+
       if (playerLives <= 0) {
-        triggerGameOver();
+        triggerDeathSequence();
         return;
       }
-      // Flash player during 1500ms invincibility window
+
+      // Play hurt animation briefly (plays once, update() resumes normal anim after)
+      player.anims.play('hurt');
+
+      if (playerLives === 1) {
+        // Last-life warning: blink heart icon
+        if (!hudHeartBlink && hudHeartIcon) {
+          hudHeartBlink = scene.tweens.add({
+            targets: hudHeartIcon,
+            alpha: 0.2,
+            duration: 400,
+            yoyo: true,
+            repeat: -1
+          });
+        }
+        // Red vignette at screen edges
+        if (!vignetteGfx) {
+          vignetteGfx = scene.add.graphics().setScrollFactor(0).setDepth(19);
+          vignetteGfx.fillStyle(0xff0000, 0.25);
+          vignetteGfx.fillRect(0,    0,   1280,  60);   // top strip
+          vignetteGfx.fillRect(0,    660, 1280,  60);   // bottom strip
+          vignetteGfx.fillRect(0,    0,   60,   720);   // left strip
+          vignetteGfx.fillRect(1220, 0,   60,   720);   // right strip
+        }
+      }
+
+      // Flash player during 1500ms invincibility window (9 yoyos × 2 × 80ms ≈ 1440ms)
       scene.tweens.add({
         targets: player,
         alpha: 0.3,
@@ -184,13 +264,63 @@
       });
     }
 
-    function onBlockHit(block) {
-      // Only exclamation-type blocks give hearts
-      const key = block.texture.key;
-      if (!key.includes('exclamation') && !key.includes('question')) return;
+    function spawnSingleCoin(block) {
+      const coin = scene.add.image(block.x, block.y - 16, 'coin_gold')
+        .setScale(0.6).setDepth(5);
+      scene.tweens.add({
+        targets: coin,
+        y: block.y - 80,
+        alpha: 0,
+        duration: 600,
+        ease: 'Cubic.Out',
+        onComplete: () => { coin.destroy(); }
+      });
+      coinCount++;
+      if (hudCoinsText) hudCoinsText.setText(String(coinCount));
+    }
 
-      // Small bounce tween
-      const origY = block.y;
+    function spawnCoinBurst(block, count) {
+      coinCount += count;
+      if (hudCoinsText) hudCoinsText.setText(String(coinCount));
+      showFloatingText(scene, block.x, block.y - 48, `+${count}`, '#ffd700');
+
+      for (let i = 0; i < count; i++) {
+        const delay   = i * 25;                           // stagger each coin 25ms
+        const spreadX = (Math.random() - 0.5) * 140;     // -70..+70 horizontal
+        const upDist  = 90 + Math.random() * 70;         // 90..160px upward
+        const coin    = scene.add.image(block.x, block.y - 32, 'coin_gold')
+          .setScale(0.5).setDepth(5).setAlpha(0);
+
+        scene.time.delayedCall(delay, () => {
+          coin.setAlpha(1);
+          // Phase 1: arc upward and spread out
+          scene.tweens.add({
+            targets: coin,
+            x: block.x + spreadX,
+            y: block.y - 32 - upDist,
+            duration: 220,
+            ease: 'Cubic.Out',
+            onComplete: () => {
+              // Phase 2: fall back down and fade out
+              scene.tweens.add({
+                targets: coin,
+                y: block.y + 16,
+                alpha: 0,
+                duration: 380,
+                ease: 'Cubic.In',
+                onComplete: () => coin.destroy()
+              });
+            }
+          });
+        });
+      }
+    }
+
+    function onBlockHit(block) {
+      const key    = block.texture.key;
+      const origY  = block.y;
+
+      // Bounce tween — applies to every block type
       scene.tweens.add({
         targets: block,
         y: origY - 8,
@@ -198,22 +328,47 @@
         yoyo: true,
         onComplete: () => { block.y = origY; block.refreshBody(); }
       });
-      // Swap texture to empty after bounce
-      scene.time.delayedCall(200, () => {
-        block.setTexture('block_empty');
-        block.refreshBody();
-      });
-      // Heart floats up and fades
-      const heart = scene.add.image(block.x, block.y - 48, 'hud_heart').setScale(0.5).setDepth(5);
-      scene.tweens.add({
-        targets: heart,
-        y: block.y - 96,
-        alpha: 0,
-        duration: 600,
-        onComplete: () => { heart.destroy(); }
-      });
-      playerLives = Math.min(playerLives + 1, 9);
-      updateHudLives();
+
+      if (key.startsWith('block_strong_exclamation')) {
+        // Strong exclamation → 12-coin burst
+        spawnCoinBurst(block, 12);
+        scene.time.delayedCall(200, () => {
+          block.setTexture('block_strong_empty');
+          block.refreshBody();
+        });
+
+      } else if (key.startsWith('block_exclamation')) {
+        // Exclamation → +1 life (heart pickup)
+        const heart = scene.add.image(block.x, block.y - 48, 'hud_heart')
+          .setScale(0.5).setDepth(5);
+        scene.tweens.add({
+          targets: heart, y: block.y - 96, alpha: 0, duration: 600,
+          onComplete: () => { heart.destroy(); }
+        });
+        playerLives = Math.min(playerLives + 1, 9);
+        updateHudLives();
+        scene.time.delayedCall(200, () => {
+          block.setTexture('block_empty');
+          block.refreshBody();
+        });
+
+      } else if (key.startsWith('block_strong_coin')) {
+        // Strong coin block → 1 coin
+        spawnSingleCoin(block);
+        scene.time.delayedCall(200, () => {
+          block.setTexture('block_strong_empty');
+          block.refreshBody();
+        });
+
+      } else if (key.startsWith('block_coin')) {
+        // Coin block → 1 coin
+        spawnSingleCoin(block);
+        scene.time.delayedCall(200, () => {
+          block.setTexture('block_empty');
+          block.refreshBody();
+        });
+      }
+      // All other blocks (blue, red, yellow, etc.) — bounce only, no reward
     }
 
     function onCollect(playerObj, item) {
@@ -604,6 +759,24 @@
     function create() {
       scene = this;
 
+      // ── Reset all game state — supports scene.scene.restart() ──
+      playerLives   = 3;
+      coinCount     = 0;
+      gemCount      = 0;
+      keysCollected = 0;
+      totalKeys     = 0;
+      levelComplete = false;
+      isInvincible  = false;
+      isOnLadder    = false;
+      doorCooldown  = false;
+      isDead        = false;
+      bgLayers      = [];
+      attackState   = 'ready';
+      attackIsKick  = false;
+      coyoteTimer   = 0;
+      hudHeartBlink = null;
+      vignetteGfx   = null;
+
       // ── Level dimensions from editor JSON ─────────────────
       const levelData = this.cache.json.get('level1');
       const T      = levelData.tileSize;    // 64
@@ -775,7 +948,8 @@
       anim('attack', [27, 28, 29],               10,  0);
       anim('kick',   [19],                       10,  0);
       anim('hurt',   [33],                        6,  0);
-      anim('climb',  [5, 6],                      8, -1);
+      anim('climb',    [5, 6],  8, -1);
+      anim('fallDown', [44],    6,  0);   // death pose — frame 44
 
 
       // ── Attack zone (invisible dynamic trigger) ───────────
@@ -832,7 +1006,7 @@
       };
 
       // Lives
-      this.add.image(HX, HY, 'hud_heart')
+      hudHeartIcon = this.add.image(HX, HY, 'hud_heart')
         .setScale(0.5).setScrollFactor(0).setDepth(20);
       hudLivesText = this.add.text(HX + 24, HY, String(playerLives), hudStyle)
         .setOrigin(0, 0.5).setScrollFactor(0).setDepth(20);
@@ -881,6 +1055,9 @@
       for (const { sprite, factor } of bgLayers) {
         sprite.tilePositionX = camX * factor;
       }
+
+      // ── Skip all input / physics during death sequence ────
+      if (isDead) return;
 
       // ── Coyote time ──────────────────────────────────────
       if (onGround) {

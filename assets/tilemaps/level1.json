@@ -514,13 +514,7 @@
       "col": 49,
       "row": 9
     },
-    {
-      "key": "torch_on_b",
-      "x": 32,
-      "y": 672,
-      "col": 0,
-      "row": 10
-    },
+   
     {
       "key": "bush",
       "x": 2528,
@@ -578,7 +572,7 @@
       "row": 10
     },
     {
-      "key": "rope",
+      "key": "block_spikes",
       "x": 32,
       "y": 736,
       "col": 0,
