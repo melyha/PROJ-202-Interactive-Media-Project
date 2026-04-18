@@ -116,11 +116,15 @@
     let companionIsFront    = false;
     let companionLives      = 3;      // separate from playerLives
     let hudCompanionIcon    = null;   // reference to companion HUD head icon
-    let companionStars      = 0;      // 0–3 energy stars
+    let companionStars      = 1;      // 1–3 energy stars (always visible; starts at 1)
     let conversionAvailable = false;  // threshold reached, popup not yet shown
     let companionReady      = false;  // companion ability charged
+    let companionOperating  = false;  // companion has started active movement after ready
     let conversionPopupOpen = false;  // popup currently visible (blocks input)
+    let conversionPending   = false;  // conversion banner is showing (allows play)
     let lastConversionThreshold = 0;  // highest threshold offered so far
+    let conversionBannerObjs = [];    // elements for the persistent conversion banner
+    let readyBannerObjs      = [];    // elements for the persistent ready banner
 
     // ── TILE ROUTING ──────────────────────────────────────────
     function getTileCategory(key) {
@@ -220,7 +224,7 @@
     // ── COMPANION ENERGY STAR SYSTEM ─────────────────────────
 
     function checkCoinConversion() {
-      if (conversionPopupOpen || companionStars >= 3) return;
+      if (conversionPopupOpen || conversionPending || companionStars >= 3) return;
       const threshold = Math.floor(coinCount / COINS_TO_CONVERT);
       if (threshold > lastConversionThreshold) {
         lastConversionThreshold = threshold;
@@ -285,6 +289,7 @@
       noBtn.on('pointerdown', () => {
         closePopup();
         conversionAvailable = false;
+        showConversionBanner();
       });
 
       // Hover highlights
@@ -323,6 +328,7 @@
         conversionPopupOpen = false;
         player.body.moves = true;
         companionReady = true;
+        showReadyBanner();
       });
 
       okBtn.on('pointerover', () => okBtn.setColor('#ffffff'));
@@ -330,23 +336,80 @@
     }
 
     function updateHudStars() {
-      // Destroy existing star images and recreate
+      // Destroy existing star images and rebuild all 3 slots
       hudStars.forEach(s => s.destroy());
       hudStars = [];
       if (starGlowTween) { starGlowTween.stop(); starGlowTween = null; }
 
-      for (let i = 0; i < companionStars; i++) {
-        hudStars.push(
-          scene.add.image(48 + i * 20, 96, 'star')
-            .setScale(0.4).setScrollFactor(0).setDepth(20)
-        );
+      // Always render 3 slots — gold for earned, dim for unearned
+      for (let i = 0; i < 3; i++) {
+        const star = scene.add.image(48 + i * 20, 96, 'star')
+          .setScale(0.4).setScrollFactor(0).setDepth(20);
+        if (i >= companionStars) star.setAlpha(0.3);   // unearned slot
+        hudStars.push(star);
       }
 
-      if (companionStars === 3 && hudStars.length > 0) {
+      // At 3 stars: slow scale pulse (1.0 → 1.1 → 1.0, loop, 800ms)
+      if (companionStars === 3) {
         starGlowTween = scene.tweens.add({
-          targets: hudStars, alpha: 0.4, duration: 600, yoyo: true, repeat: -1
+          targets: hudStars,
+          scaleX: 0.44, scaleY: 0.44,   // 0.4 × 1.1 = 0.44
+          duration: 800,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.InOut'
         });
       }
+    }
+
+    // ── PERSISTENT BANNERS (shown after popup dismissal) ─────
+
+    function showConversionBanner() {
+      conversionPending = true;
+      const CW = 1280;
+      const bg  = scene.add.rectangle(CW / 2, 20, CW, 40, 0x1a0a2e, 0.88)
+        .setScrollFactor(0).setDepth(30);
+      const txt = scene.add.text(12, 20,
+        '\u2736 Convert coins to companion energy?', {
+          fontFamily: '"Press Start 2P"', fontSize: '7px', color: '#f5c875'
+        }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(30);
+      const yesBtn = scene.add.text(CW - 60, 20, '[ YES ]', {
+        fontFamily: '"Press Start 2P"', fontSize: '7px', color: '#44cc88'
+      }).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(30)
+        .setInteractive({ useHandCursor: true });
+
+      conversionBannerObjs = [bg, txt, yesBtn];
+
+      yesBtn.on('pointerover', () => yesBtn.setTint(0xffff99));
+      yesBtn.on('pointerout',  () => yesBtn.clearTint());
+      yesBtn.on('pointerdown', () => {
+        // Destroy banner
+        conversionBannerObjs.forEach(e => e.destroy());
+        conversionBannerObjs = [];
+        conversionPending = false;
+        // Full YES conversion logic
+        coinCount -= COINS_TO_CONVERT;
+        if (hudCoinsText) hudCoinsText.setText(String(coinCount));
+        lastConversionThreshold = Math.floor(coinCount / COINS_TO_CONVERT);
+        companionStars = Math.min(3, companionStars + 1);
+        updateHudStars();
+        showReadyPopup();
+      });
+    }
+
+    function showReadyBanner() {
+      // Stack below conversion banner if it is still showing
+      const bannerY = conversionPending ? 44 : 0;
+      const CW = 1280;
+      const bg  = scene.add.rectangle(CW / 2, bannerY + 20, CW, 40, 0x1a0a2e, 0.88)
+        .setScrollFactor(0).setDepth(30);
+      const txt = scene.add.text(12, bannerY + 20,
+        '\u2736 Companion ready to operate!', {
+          fontFamily: '"Press Start 2P"', fontSize: '7px', color: '#c8aaff'
+        }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(30);
+
+      readyBannerObjs = [bg, txt];
+      // No button — auto-dismissed when companionOperating becomes true (see update())
     }
 
     function clearLastLifeWarning() {
@@ -982,13 +1045,17 @@
       companionIsFront        = false;
       companionLives          = 3;
       hudCompanionIcon        = null;
-      companionStars          = 0;
+      companionStars          = 1;
       conversionAvailable     = false;
       companionReady          = false;
+      companionOperating      = false;
       conversionPopupOpen     = false;
+      conversionPending       = false;
       lastConversionThreshold = 0;
       hudStars                = [];
       starGlowTween           = null;
+      conversionBannerObjs    = [];
+      readyBannerObjs         = [];
 
       // ── Level dimensions from editor JSON ─────────────────
       const levelData = this.cache.json.get('level1');
@@ -1126,13 +1193,14 @@
       // y = 836 - 48 = 788 places player standing exactly on ground at start.
       player = this.physics.add.sprite(100, 700, 'player');
       player.setScale(0.75);
+      player.setDepth(10);
       player.body.setSize(56, 104);  // frame-space: 42×78px world
       player.body.setOffset(20, 24); // center X; push body down past head
       player.setCollideWorldBounds(true);
 
       // ── Companion — no physics, lerp-based follow ─────────
-      companion = this.add.image(player.x + 80, player.y - 60, 'character_purple_idle')
-        .setScale(0.5).setDepth(15);
+      companion = this.add.image(player.x - 80, player.y - 60, 'character_purple_idle')
+        .setScale(0.5).setDepth(9);
 
       // Solid terrain colliders
       this.physics.add.collider(player, groundLayer);
@@ -1303,12 +1371,42 @@
       // ── Skip all input / physics during death sequence or popup ──
       if (isDead || conversionPopupOpen) return;
 
+      // ── Ready banner dismiss — triggers when companion first moves after OK ──
+      if (companionReady && !companionOperating && Math.abs(player.body.velocity.x) > 5) {
+        companionOperating = true;
+        // Destroy ready banner
+        if (readyBannerObjs.length > 0) {
+          readyBannerObjs.forEach(e => e.destroy());
+          readyBannerObjs = [];
+        }
+        // One-shot scale pulse on all 3 star icons (scale 1.0 → 1.15 → 1.0, 400ms)
+        if (hudStars.length > 0) {
+          if (starGlowTween) { starGlowTween.stop(); starGlowTween = null; }
+          scene.tweens.add({
+            targets: hudStars,
+            scaleX: 0.46, scaleY: 0.46,   // 0.4 × 1.15 = 0.46
+            duration: 200,
+            yoyo: true,
+            ease: 'Sine.InOut',
+            onComplete: () => {
+              // Restart persistent scale pulse if still at 3 stars
+              if (companionStars === 3 && hudStars.length > 0) {
+                starGlowTween = scene.tweens.add({
+                  targets: hudStars, scaleX: 0.44, scaleY: 0.44,
+                  duration: 800, yoyo: true, repeat: -1, ease: 'Sine.InOut'
+                });
+              }
+            }
+          });
+        }
+      }
+
       // ── Companion follow ──────────────────────────────────
       if (companion) {
-        const targetX = player.x + (player.flipX ? -80 : 80);
+        const targetX = player.x - 80;
         const targetY = player.y - 60;
-        companion.x += (targetX - companion.x) * 0.08;
-        companion.y += (targetY - companion.y) * 0.08;
+        companion.x += (targetX - companion.x) * 0.04;
+        companion.y += (targetY - companion.y) * 0.04;
         companion.y += Math.sin(time * 0.003) * 0.8;  // gentle sine bob
         companion.setFlipX(player.flipX);
 
