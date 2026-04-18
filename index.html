@@ -53,9 +53,10 @@
     const game = new Phaser.Game(config);
 
     // ── CONSTANTS ─────────────────────────────────────────
-    const MOVE_SPEED = 250;
-    const JUMP_VEL = -600;
-    const COYOTE_MS = 150;   // grace window after leaving a platform edge
+    const MOVE_SPEED      = 250;
+    const JUMP_VEL        = -600;
+    const COYOTE_MS       = 150;   // grace window after leaving a platform edge
+    const COINS_TO_CONVERT = 15;   // coins required for one companion energy star
 
     // ── VARIABLES ─────────────────────────────────────────
     let player;
@@ -95,17 +96,31 @@
     let doorGroup;
     let collectiblesGroup;
 
-    // ── HUD text references ─────────────────────────────────
-    let hudLivesText;
+    // ── HUD references ──────────────────────────────────────
+    let hudHearts          = [];    // [img0, img1, img2] — player heart slots
     let hudCoinsText;
     let hudGemsText;
     let hudKeysText;
-    let hudHeartIcon  = null;   // reference to heart icon (for blinking)
-    let hudHeartBlink = null;   // active blink tween
-    let vignetteGfx   = null;   // red edge vignette (last-life warning)
+    let hudHeartBlink      = null;  // active blink tween (targets hudHearts[0])
+    let vignetteGfx        = null;  // red edge vignette (last-life warning)
+    let hudCompanionHearts = [];    // companion heart slots
+    let hudStars           = [];    // companion energy star icons (0–3)
+    let starGlowTween      = null;  // glow tween when all 3 stars filled
 
     // ── Death state ──────────────────────────────────────────
     let isDead = false;
+
+    // ── Companion ────────────────────────────────────────────
+    let companion           = null;
+    let companionIdleTime   = 0;
+    let companionIsFront    = false;
+    let companionLives      = 3;      // separate from playerLives
+    let hudCompanionIcon    = null;   // reference to companion HUD head icon
+    let companionStars      = 0;      // 0–3 energy stars
+    let conversionAvailable = false;  // threshold reached, popup not yet shown
+    let companionReady      = false;  // companion ability charged
+    let conversionPopupOpen = false;  // popup currently visible (blocks input)
+    let lastConversionThreshold = 0;  // highest threshold offered so far
 
     // ── TILE ROUTING ──────────────────────────────────────────
     function getTileCategory(key) {
@@ -152,15 +167,193 @@
     }
 
     function updateHudLives() {
-      if (hudLivesText) hudLivesText.setText(String(playerLives));
-      if (playerLives > 1) clearLastLifeWarning();
+      updatePlayerHearts();
+    }
+
+    function updatePlayerHearts() {
+      // Map lives count → texture per slot
+      // 3 → full full full
+      // 2 → full full empty
+      // 1 → half empty empty  (+ warn)
+      // 0 → empty empty empty (death handled by caller)
+      const t = ['hud_heart_empty', 'hud_heart_empty', 'hud_heart_empty'];
+      if (playerLives >= 3)      { t[0] = t[1] = t[2] = 'hud_heart'; }
+      else if (playerLives === 2) { t[0] = t[1] = 'hud_heart'; }
+      else if (playerLives === 1) { t[0] = 'hud_heart_half'; }
+      for (let i = 0; i < 3; i++) {
+        if (hudHearts[i]) hudHearts[i].setTexture(t[i]);
+      }
+      if (playerLives === 1) {
+        if (!hudHeartBlink && hudHearts[0]) {
+          hudHeartBlink = scene.tweens.add({
+            targets: hudHearts[0], alpha: 0.2, duration: 400, yoyo: true, repeat: -1
+          });
+        }
+        if (!vignetteGfx) {
+          vignetteGfx = scene.add.graphics().setScrollFactor(0).setDepth(19);
+          vignetteGfx.fillStyle(0xff0000, 0.25);
+          vignetteGfx.fillRect(0,    0,   1280,  60);
+          vignetteGfx.fillRect(0,    660, 1280,  60);
+          vignetteGfx.fillRect(0,    0,   60,   720);
+          vignetteGfx.fillRect(1220, 0,   60,   720);
+        }
+      } else if (playerLives > 1) {
+        clearLastLifeWarning();
+      }
+    }
+
+    function updateCompanionHearts() {
+      const t = ['hud_heart_empty', 'hud_heart_empty', 'hud_heart_empty'];
+      if (companionLives >= 3)      { t[0] = t[1] = t[2] = 'hud_heart'; }
+      else if (companionLives === 2) { t[0] = t[1] = 'hud_heart'; }
+      else if (companionLives === 1) { t[0] = 'hud_heart_half'; }
+      for (let i = 0; i < 3; i++) {
+        if (hudCompanionHearts[i]) hudCompanionHearts[i].setTexture(t[i]);
+      }
+      if (companionLives <= 0) {
+        // Companion inactive — grey out icon
+        if (hudCompanionIcon) { hudCompanionIcon.setTint(0x555555).setAlpha(0.5); }
+        if (companion)        { companion.setTint(0x555555).setAlpha(0.5); }
+      }
+    }
+
+    // ── COMPANION ENERGY STAR SYSTEM ─────────────────────────
+
+    function checkCoinConversion() {
+      if (conversionPopupOpen || companionStars >= 3) return;
+      const threshold = Math.floor(coinCount / COINS_TO_CONVERT);
+      if (threshold > lastConversionThreshold) {
+        lastConversionThreshold = threshold;
+        conversionAvailable = true;
+        showConversionPopup();
+      }
+    }
+
+    function showConversionPopup() {
+      conversionPopupOpen = true;
+      player.body.setVelocity(0, 0);
+      player.body.moves = false;
+
+      const PX = 640, PY = 360;
+      const panel  = scene.add.rectangle(PX, PY, 520, 190, 0x000033, 0.88)
+        .setScrollFactor(0).setDepth(60);
+      const border = scene.add.graphics().setScrollFactor(0).setDepth(60);
+      border.lineStyle(2, 0xaa88ff, 1);
+      border.strokeRect(PX - 260, PY - 95, 520, 190);
+
+      const line1 = scene.add.text(PX, PY - 52, '\u2736 15 Coins collected!', {
+        fontFamily: '"Press Start 2P"', fontSize: '13px', color: '#ffd700',
+        stroke: '#000000', strokeThickness: 3
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(61);
+
+      const line2 = scene.add.text(PX, PY - 18, 'Convert to Companion Energy?', {
+        fontFamily: '"Press Start 2P"', fontSize: '10px', color: '#ffffff',
+        stroke: '#000000', strokeThickness: 2
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(61);
+
+      const yesBtn = scene.add.text(PX - 110, PY + 38, '[ YES \u2014 Convert ]', {
+        fontFamily: '"Press Start 2P"', fontSize: '10px', color: '#00ff88',
+        stroke: '#000000', strokeThickness: 2, backgroundColor: '#003311',
+        padding: { x: 8, y: 6 }
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(61).setInteractive({ useHandCursor: true });
+
+      const noBtn = scene.add.text(PX + 110, PY + 38, '[ Not Yet ]', {
+        fontFamily: '"Press Start 2P"', fontSize: '10px', color: '#ff6666',
+        stroke: '#000000', strokeThickness: 2, backgroundColor: '#330011',
+        padding: { x: 8, y: 6 }
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(61).setInteractive({ useHandCursor: true });
+
+      const elements = [panel, border, line1, line2, yesBtn, noBtn];
+
+      const closePopup = () => {
+        elements.forEach(e => e.destroy());
+        conversionPopupOpen = false;
+        player.body.moves = true;
+      };
+
+      yesBtn.on('pointerdown', () => {
+        closePopup();
+        coinCount -= COINS_TO_CONVERT;
+        if (hudCoinsText) hudCoinsText.setText(String(coinCount));
+        // Reset threshold based on remaining coins so next 15 triggers again
+        lastConversionThreshold = Math.floor(coinCount / COINS_TO_CONVERT);
+        companionStars = Math.min(3, companionStars + 1);
+        updateHudStars();
+        showReadyPopup();
+      });
+
+      noBtn.on('pointerdown', () => {
+        closePopup();
+        conversionAvailable = false;
+      });
+
+      // Hover highlights
+      yesBtn.on('pointerover',  () => yesBtn.setColor('#ffffff'));
+      yesBtn.on('pointerout',   () => yesBtn.setColor('#00ff88'));
+      noBtn.on('pointerover',   () => noBtn.setColor('#ffffff'));
+      noBtn.on('pointerout',    () => noBtn.setColor('#ff6666'));
+    }
+
+    function showReadyPopup() {
+      conversionPopupOpen = true;
+      player.body.moves = false;
+
+      const PX = 640, PY = 360;
+      const panel  = scene.add.rectangle(PX, PY, 420, 160, 0x000033, 0.88)
+        .setScrollFactor(0).setDepth(60);
+      const border = scene.add.graphics().setScrollFactor(0).setDepth(60);
+      border.lineStyle(2, 0xaa88ff, 1);
+      border.strokeRect(PX - 210, PY - 80, 420, 160);
+
+      const msg = scene.add.text(PX, PY - 22, 'Companion ready\nto operate!', {
+        fontFamily: '"Press Start 2P"', fontSize: '13px', color: '#aa88ff',
+        stroke: '#000000', strokeThickness: 3, align: 'center'
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(61);
+
+      const okBtn = scene.add.text(PX, PY + 44, '[ OK ]', {
+        fontFamily: '"Press Start 2P"', fontSize: '12px', color: '#ffd700',
+        stroke: '#000000', strokeThickness: 2, backgroundColor: '#332200',
+        padding: { x: 10, y: 6 }
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(61).setInteractive({ useHandCursor: true });
+
+      const elements = [panel, border, msg, okBtn];
+
+      okBtn.on('pointerdown', () => {
+        elements.forEach(e => e.destroy());
+        conversionPopupOpen = false;
+        player.body.moves = true;
+        companionReady = true;
+      });
+
+      okBtn.on('pointerover', () => okBtn.setColor('#ffffff'));
+      okBtn.on('pointerout',  () => okBtn.setColor('#ffd700'));
+    }
+
+    function updateHudStars() {
+      // Destroy existing star images and recreate
+      hudStars.forEach(s => s.destroy());
+      hudStars = [];
+      if (starGlowTween) { starGlowTween.stop(); starGlowTween = null; }
+
+      for (let i = 0; i < companionStars; i++) {
+        hudStars.push(
+          scene.add.image(48 + i * 20, 96, 'star')
+            .setScale(0.4).setScrollFactor(0).setDepth(20)
+        );
+      }
+
+      if (companionStars === 3 && hudStars.length > 0) {
+        starGlowTween = scene.tweens.add({
+          targets: hudStars, alpha: 0.4, duration: 600, yoyo: true, repeat: -1
+        });
+      }
     }
 
     function clearLastLifeWarning() {
       if (hudHeartBlink) {
         hudHeartBlink.stop();
         hudHeartBlink = null;
-        if (hudHeartIcon) hudHeartIcon.setAlpha(1);
+        if (hudHearts[0]) hudHearts[0].setAlpha(1);
       }
       if (vignetteGfx) {
         vignetteGfx.destroy();
@@ -179,6 +372,18 @@
 
       // Play fallDown animation (frame 44 = "fallDown" in spritesheet)
       player.anims.play('fallDown', true);
+
+      // Companion death reaction — spin and fall off screen
+      if (companion) {
+        scene.tweens.add({
+          targets: companion,
+          angle: 360,
+          y: companion.y + 250,
+          alpha: 0,
+          duration: 900,
+          ease: 'Cubic.In'
+        });
+      }
 
       // Screen shake
       scene.cameras.main.shake(400, 0.02);
@@ -231,28 +436,6 @@
       // Play hurt animation briefly (plays once, update() resumes normal anim after)
       player.anims.play('hurt');
 
-      if (playerLives === 1) {
-        // Last-life warning: blink heart icon
-        if (!hudHeartBlink && hudHeartIcon) {
-          hudHeartBlink = scene.tweens.add({
-            targets: hudHeartIcon,
-            alpha: 0.2,
-            duration: 400,
-            yoyo: true,
-            repeat: -1
-          });
-        }
-        // Red vignette at screen edges
-        if (!vignetteGfx) {
-          vignetteGfx = scene.add.graphics().setScrollFactor(0).setDepth(19);
-          vignetteGfx.fillStyle(0xff0000, 0.25);
-          vignetteGfx.fillRect(0,    0,   1280,  60);   // top strip
-          vignetteGfx.fillRect(0,    660, 1280,  60);   // bottom strip
-          vignetteGfx.fillRect(0,    0,   60,   720);   // left strip
-          vignetteGfx.fillRect(1220, 0,   60,   720);   // right strip
-        }
-      }
-
       // Flash player during 1500ms invincibility window (9 yoyos × 2 × 80ms ≈ 1440ms)
       scene.tweens.add({
         targets: player,
@@ -277,11 +460,13 @@
       });
       coinCount++;
       if (hudCoinsText) hudCoinsText.setText(String(coinCount));
+      checkCoinConversion();
     }
 
     function spawnCoinBurst(block, count) {
       coinCount += count;
       if (hudCoinsText) hudCoinsText.setText(String(coinCount));
+      checkCoinConversion();
       showFloatingText(scene, block.x, block.y - 48, `+${count}`, '#ffd700');
 
       for (let i = 0; i < count; i++) {
@@ -317,8 +502,8 @@
     }
 
     function onBlockHit(block) {
-      const key    = block.texture.key;
-      const origY  = block.y;
+      const key   = block.texture.key;
+      const origY = block.y;
 
       // Bounce tween — applies to every block type
       scene.tweens.add({
@@ -329,16 +514,18 @@
         onComplete: () => { block.y = origY; block.refreshBody(); }
       });
 
-      if (key.startsWith('block_strong_exclamation')) {
-        // Strong exclamation → 12-coin burst
-        spawnCoinBurst(block, 12);
-        scene.time.delayedCall(200, () => {
-          block.setTexture('block_strong_empty');
-          block.refreshBody();
-        });
+      if (key === 'block_coin_active') {
+        // Active coin block → 1 coin → reverts to inert block_coin
+        spawnSingleCoin(block);
+        scene.time.delayedCall(200, () => { block.setTexture('block_coin'); block.refreshBody(); });
 
-      } else if (key.startsWith('block_exclamation')) {
-        // Exclamation → +1 life (heart pickup)
+      } else if (key === 'block_strong_coin_active') {
+        // Active strong coin → 12-coin burst → reverts to inert block_strong_coin
+        spawnCoinBurst(block, 12);
+        scene.time.delayedCall(200, () => { block.setTexture('block_strong_coin'); block.refreshBody(); });
+
+      } else if (key === 'block_exclamation_active') {
+        // Active exclamation → +1 life → reverts to inert block_exclamation
         const heart = scene.add.image(block.x, block.y - 48, 'hud_heart')
           .setScale(0.5).setDepth(5);
         scene.tweens.add({
@@ -347,28 +534,32 @@
         });
         playerLives = Math.min(playerLives + 1, 9);
         updateHudLives();
-        scene.time.delayedCall(200, () => {
-          block.setTexture('block_empty');
-          block.refreshBody();
-        });
+        scene.time.delayedCall(200, () => { block.setTexture('block_exclamation'); block.refreshBody(); });
 
-      } else if (key.startsWith('block_strong_coin')) {
-        // Strong coin block → 1 coin
-        spawnSingleCoin(block);
-        scene.time.delayedCall(200, () => {
-          block.setTexture('block_strong_empty');
-          block.refreshBody();
-        });
+      } else if (key === 'block_strong_exclamation_active') {
+        // Active strong exclamation → 2000ms shield (gold flash, invincibility) → reverts to block_strong_exclamation
+        if (!isInvincible) {
+          isInvincible = true;
+          showFloatingText(scene, block.x, block.y - 48, 'SHIELD!', '#ffd700');
+          player.setTint(0xffd700);
+          const shieldTween = scene.tweens.add({
+            targets: player, alpha: 0.7, duration: 150, yoyo: true, repeat: -1
+          });
+          scene.time.delayedCall(2000, () => {
+            shieldTween.stop();
+            player.clearTint();
+            player.setAlpha(1);
+            isInvincible = false;
+          });
+        }
+        scene.time.delayedCall(200, () => { block.setTexture('block_strong_exclamation'); block.refreshBody(); });
 
-      } else if (key.startsWith('block_coin')) {
-        // Coin block → 1 coin
-        spawnSingleCoin(block);
-        scene.time.delayedCall(200, () => {
-          block.setTexture('block_empty');
-          block.refreshBody();
-        });
+      } else if (key === 'block_yellow') {
+        // Yellow block → 40% empty / 60% 1 coin → always converts to block_empty
+        if (Math.random() < 0.6) spawnSingleCoin(block);
+        scene.time.delayedCall(200, () => { block.setTexture('block_empty'); block.refreshBody(); });
       }
-      // All other blocks (blue, red, yellow, etc.) — bounce only, no reward
+      // All other blocks — bounce only, no conversion
     }
 
     function onCollect(playerObj, item) {
@@ -390,6 +581,7 @@
       if (texKey.startsWith('coin')) {
         coinCount++;
         if (hudCoinsText) hudCoinsText.setText(String(coinCount));
+        checkCoinConversion();
       } else if (texKey.startsWith('gem')) {
         gemCount++;
         if (hudGemsText) hudGemsText.setText(String(gemCount));
@@ -753,6 +945,13 @@
       this.load.image('water_top_low', 'assets/sprites/tiles/water_top_low.png');
       this.load.image('weight', 'assets/sprites/tiles/weight.png');
       this.load.image('window', 'assets/sprites/tiles/window.png');
+
+      // ── Companion sprites — 128×128px each ──────────────────
+      this.load.image('character_purple_idle',  'assets/sprites/companion/character_purple_idle.png');
+      this.load.image('character_purple_front', 'assets/sprites/companion/character_purple_front.png');
+
+      // ── Character head — from PNG/Parts/, used for HUD icon ──
+      this.load.image('char_head', 'assets/sprites/character/PNG/Parts/head.png');
     }
 
     // ── CREATE — gym level sandbox ─────────────────────────
@@ -774,8 +973,22 @@
       attackState   = 'ready';
       attackIsKick  = false;
       coyoteTimer   = 0;
-      hudHeartBlink = null;
-      vignetteGfx   = null;
+      hudHeartBlink      = null;
+      vignetteGfx        = null;
+      hudHearts          = [];
+      hudCompanionHearts = [];
+      companion               = null;
+      companionIdleTime       = 0;
+      companionIsFront        = false;
+      companionLives          = 3;
+      hudCompanionIcon        = null;
+      companionStars          = 0;
+      conversionAvailable     = false;
+      companionReady          = false;
+      conversionPopupOpen     = false;
+      lastConversionThreshold = 0;
+      hudStars                = [];
+      starGlowTween           = null;
 
       // ── Level dimensions from editor JSON ─────────────────
       const levelData = this.cache.json.get('level1');
@@ -917,6 +1130,10 @@
       player.body.setOffset(20, 24); // center X; push body down past head
       player.setCollideWorldBounds(true);
 
+      // ── Companion — no physics, lerp-based follow ─────────
+      companion = this.add.image(player.x + 80, player.y - 60, 'character_purple_idle')
+        .setScale(0.5).setDepth(15);
+
       // Solid terrain colliders
       this.physics.add.collider(player, groundLayer);
       this.physics.add.collider(player, platformsGroup);
@@ -994,9 +1211,14 @@
       });
 
       // ── HUD — fixed to screen, top-left ──────────────────────
-      const HX = 20;   // icon centre X
-      const HY = 30;   // first row centre Y
-      const HR = 40;   // row spacing
+      //
+      //  Row 1 (y=16):  char_head icon  +  3× player hearts   spacing=28
+      //  Row 2 (y=56):  companion icon  +  3× companion hearts spacing=28
+      //  Row 2.5 (y=96): reserved for companion energy star system
+      //  Row 3 (y=136): coins icon + count
+      //  Row 4 (y=176): gems icon + count
+      //  Row 5 (y=216): keys icon + count
+      //
       const hudStyle = {
         fontFamily: '"Press Start 2P"',
         fontSize: '14px',
@@ -1005,29 +1227,51 @@
         strokeThickness: 3
       };
 
-      // Lives
-      hudHeartIcon = this.add.image(HX, HY, 'hud_heart')
+      // ── Row 1: Maevea — char_head icon + 3 player hearts ─
+      this.add.image(16, 16, 'char_head')
         .setScale(0.5).setScrollFactor(0).setDepth(20);
-      hudLivesText = this.add.text(HX + 24, HY, String(playerLives), hudStyle)
+      for (let i = 0; i < 3; i++) {
+        hudHearts.push(
+          this.add.image(44 + i * 28, 16, 'hud_heart')
+            .setScale(0.5).setScrollFactor(0).setDepth(20)
+        );
+      }
+
+      // ── Row 2: Sable — companion icon + 3 companion hearts ─
+      hudCompanionIcon = this.add.image(16, 56, 'hud_player_purple')
+        .setScale(0.5).setScrollFactor(0).setDepth(20);
+      for (let i = 0; i < 3; i++) {
+        hudCompanionHearts.push(
+          this.add.image(44 + i * 28, 56, 'hud_heart')
+            .setScale(0.5).setScrollFactor(0).setDepth(20)
+        );
+      }
+
+      // ── Row 2.5 (y=96): reserved for energy star system ───
+      // (nothing added here)
+
+      // ── Row 3: Coins ──────────────────────────────────────
+      this.add.image(16, 136, 'coin_gold')
+        .setScale(0.5).setScrollFactor(0).setDepth(20);
+      hudCoinsText = this.add.text(40, 136, '0', hudStyle)
         .setOrigin(0, 0.5).setScrollFactor(0).setDepth(20);
 
-      // Coins
-      this.add.image(HX, HY + HR, 'coin_gold')
+      // ── Row 4: Gems ───────────────────────────────────────
+      this.add.image(16, 176, 'gem_yellow')
         .setScale(0.5).setScrollFactor(0).setDepth(20);
-      hudCoinsText = this.add.text(HX + 24, HY + HR, '0', hudStyle)
+      hudGemsText = this.add.text(40, 176, '0', hudStyle)
         .setOrigin(0, 0.5).setScrollFactor(0).setDepth(20);
 
-      // Gems
-      this.add.image(HX, HY + HR * 2, 'gem_yellow')
+      // ── Row 5: Keys ───────────────────────────────────────
+      this.add.image(16, 216, 'hud_key_yellow')
         .setScale(0.5).setScrollFactor(0).setDepth(20);
-      hudGemsText = this.add.text(HX + 24, HY + HR * 2, '0', hudStyle)
+      hudKeysText = this.add.text(40, 216, `0/${totalKeys}`, hudStyle)
         .setOrigin(0, 0.5).setScrollFactor(0).setDepth(20);
 
-      // Keys — denominator shows total keys in level
-      this.add.image(HX, HY + HR * 3, 'hud_key_yellow')
-        .setScale(0.5).setScrollFactor(0).setDepth(20);
-      hudKeysText = this.add.text(HX + 24, HY + HR * 3, `0/${totalKeys}`, hudStyle)
-        .setOrigin(0, 0.5).setScrollFactor(0).setDepth(20);
+      // Draw initial heart states and star display
+      updatePlayerHearts();
+      updateCompanionHearts();
+      updateHudStars();
 
       // ── Debug overlay — fixed to camera, top-right corner ─
       // setScrollFactor(0) keeps it in screen space while the camera pans
@@ -1056,8 +1300,34 @@
         sprite.tilePositionX = camX * factor;
       }
 
-      // ── Skip all input / physics during death sequence ────
-      if (isDead) return;
+      // ── Skip all input / physics during death sequence or popup ──
+      if (isDead || conversionPopupOpen) return;
+
+      // ── Companion follow ──────────────────────────────────
+      if (companion) {
+        const targetX = player.x + (player.flipX ? -80 : 80);
+        const targetY = player.y - 60;
+        companion.x += (targetX - companion.x) * 0.08;
+        companion.y += (targetY - companion.y) * 0.08;
+        companion.y += Math.sin(time * 0.003) * 0.8;  // gentle sine bob
+        companion.setFlipX(player.flipX);
+
+        // Switch to 'front' texture after 1s of player idle; back when moving
+        const isPlayerIdle = player.body.velocity.x === 0 && onGround;
+        if (isPlayerIdle) {
+          companionIdleTime += delta;
+          if (companionIdleTime >= 1000 && !companionIsFront) {
+            companionIsFront = true;
+            companion.setTexture('character_purple_front');
+          }
+        } else {
+          companionIdleTime = 0;
+          if (companionIsFront) {
+            companionIsFront = false;
+            companion.setTexture('character_purple_idle');
+          }
+        }
+      }
 
       // ── Coyote time ──────────────────────────────────────
       if (onGround) {
