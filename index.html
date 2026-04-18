@@ -25,32 +25,9 @@
 <body>
 
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script type="module" src="src/main.js"></script>
 
   <script>
-    const config = {
-      type: Phaser.AUTO,
-      width: 1280,
-      height: 720,
-      backgroundColor: '#1a1a2e',
-      scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH
-      },
-      physics: {
-        default: 'arcade',
-        arcade: {
-          gravity: { y: 800 },
-          debug: true   // toggle at runtime with G key
-        }
-      },
-      scene: {
-        preload,
-        create,
-        update
-      }
-    };
-
-    const game = new Phaser.Game(config);
 
     // ── CONSTANTS ─────────────────────────────────────────
     const MOVE_SPEED      = 250;

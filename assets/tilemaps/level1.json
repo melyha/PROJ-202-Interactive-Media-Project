@@ -179,7 +179,7 @@
       "row": 4
     },
     {
-      "key": "block_coin_active",
+      "key": "block_strong_coin_active",
       "x": 1248,
       "y": 288,
       "col": 19,

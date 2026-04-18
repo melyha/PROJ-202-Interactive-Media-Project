@@ -34,43 +34,248 @@
       "hdFrameHeight": 256,
       "notes": "Load with this.load.spritesheet(key, path, { frameWidth: 96, frameHeight: 128 }). Frame indices are 0-based, left-to-right, top-to-bottom. An XML atlas (character_femaleAdventurer_sheet.xml) exists alongside the PNG if you prefer atlas loading.",
       "frameNames": [
-        "idle", "jump", "fall", "duck", "hit", "climb0", "climb1", "cheer0", "cheer1",
-        "back", "slide", "interact", "switch0", "switch1", "kick", "side", "shove", "shoveBack",
-        "talk", "attackKick", "hang", "hold", "show", "behindBack", "run0", "run1", "run2",
-        "attack0", "attack1", "attack2", "think", "down", "drag", "hurt", "wide", "rope",
-        "walk0", "walk1", "walk2", "walk3", "walk4", "walk5", "walk6", "walk7", "fallDown"
+        "idle",
+        "jump",
+        "fall",
+        "duck",
+        "hit",
+        "climb0",
+        "climb1",
+        "cheer0",
+        "cheer1",
+        "back",
+        "slide",
+        "interact",
+        "switch0",
+        "switch1",
+        "kick",
+        "side",
+        "shove",
+        "shoveBack",
+        "talk",
+        "attackKick",
+        "hang",
+        "hold",
+        "show",
+        "behindBack",
+        "run0",
+        "run1",
+        "run2",
+        "attack0",
+        "attack1",
+        "attack2",
+        "think",
+        "down",
+        "drag",
+        "hurt",
+        "wide",
+        "rope",
+        "walk0",
+        "walk1",
+        "walk2",
+        "walk3",
+        "walk4",
+        "walk5",
+        "walk6",
+        "walk7",
+        "fallDown"
       ],
       "animGroups": {
-        "idle":       { "frames": [0],                           "note": "standing still" },
-        "jump":       { "frames": [1],                           "note": "in-air / airborne" },
-        "fall":       { "frames": [2],                           "note": "falling downward" },
-        "fallDown":   { "frames": [44],                          "note": "falling forward / knocked down" },
-        "duck":       { "frames": [3],                           "note": "crouch / duck" },
-        "hit":        { "frames": [4],                           "note": "damage flash frame" },
-        "hurt":       { "frames": [33],                          "note": "injury recoil" },
-        "climb":      { "frames": [5, 6],                        "note": "ladder climb A→B loop" },
-        "cheer":      { "frames": [7, 8],                        "note": "celebration A→B loop" },
-        "run":        { "frames": [24, 25, 26],                  "note": "3-frame run cycle" },
-        "walk":       { "frames": [36, 37, 38, 39, 40, 41, 42, 43], "note": "8-frame walk cycle" },
-        "attack":     { "frames": [27, 28, 29],                  "note": "3-frame melee combo" },
-        "attackKick": { "frames": [19],                          "note": "kick attack" },
-        "kick":       { "frames": [14],                          "note": "standing kick" },
-        "shove":      { "frames": [16, 17],                      "note": "push A→B" },
-        "slide":      { "frames": [10],                          "note": "sliding / skid" },
-        "hang":       { "frames": [20],                          "note": "hanging from ledge" },
-        "rope":       { "frames": [35],                          "note": "rope / swing hold" },
-        "interact":   { "frames": [11],                          "note": "picking up / pressing" },
-        "hold":       { "frames": [21],                          "note": "holding an object" },
-        "switch":     { "frames": [12, 13],                      "note": "lever/switch animation" },
-        "talk":       { "frames": [18],                          "note": "dialogue pose" },
-        "think":      { "frames": [30],                          "note": "thinking pose" },
-        "show":       { "frames": [22],                          "note": "show / point pose" },
-        "side":       { "frames": [15],                          "note": "side-facing static" },
-        "back":       { "frames": [9],                           "note": "back-facing static" },
-        "wide":       { "frames": [34],                          "note": "wide-stance pose" },
-        "behindBack": { "frames": [23],                          "note": "hands behind back" },
-        "down":       { "frames": [31],                          "note": "looking down" },
-        "drag":       { "frames": [32],                          "note": "dragging something" }
+        "idle": {
+          "frames": [
+            0
+          ],
+          "note": "standing still"
+        },
+        "jump": {
+          "frames": [
+            1
+          ],
+          "note": "in-air / airborne"
+        },
+        "fall": {
+          "frames": [
+            2
+          ],
+          "note": "falling downward"
+        },
+        "fallDown": {
+          "frames": [
+            44
+          ],
+          "note": "falling forward / knocked down"
+        },
+        "duck": {
+          "frames": [
+            3
+          ],
+          "note": "crouch / duck"
+        },
+        "hit": {
+          "frames": [
+            4
+          ],
+          "note": "damage flash frame"
+        },
+        "hurt": {
+          "frames": [
+            33
+          ],
+          "note": "injury recoil"
+        },
+        "climb": {
+          "frames": [
+            5,
+            6
+          ],
+          "note": "ladder climb A→B loop"
+        },
+        "cheer": {
+          "frames": [
+            7,
+            8
+          ],
+          "note": "celebration A→B loop"
+        },
+        "run": {
+          "frames": [
+            24,
+            25,
+            26
+          ],
+          "note": "3-frame run cycle"
+        },
+        "walk": {
+          "frames": [
+            36,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43
+          ],
+          "note": "8-frame walk cycle"
+        },
+        "attack": {
+          "frames": [
+            27,
+            28,
+            29
+          ],
+          "note": "3-frame melee combo"
+        },
+        "attackKick": {
+          "frames": [
+            19
+          ],
+          "note": "kick attack"
+        },
+        "kick": {
+          "frames": [
+            14
+          ],
+          "note": "standing kick"
+        },
+        "shove": {
+          "frames": [
+            16,
+            17
+          ],
+          "note": "push A→B"
+        },
+        "slide": {
+          "frames": [
+            10
+          ],
+          "note": "sliding / skid"
+        },
+        "hang": {
+          "frames": [
+            20
+          ],
+          "note": "hanging from ledge"
+        },
+        "rope": {
+          "frames": [
+            35
+          ],
+          "note": "rope / swing hold"
+        },
+        "interact": {
+          "frames": [
+            11
+          ],
+          "note": "picking up / pressing"
+        },
+        "hold": {
+          "frames": [
+            21
+          ],
+          "note": "holding an object"
+        },
+        "switch": {
+          "frames": [
+            12,
+            13
+          ],
+          "note": "lever/switch animation"
+        },
+        "talk": {
+          "frames": [
+            18
+          ],
+          "note": "dialogue pose"
+        },
+        "think": {
+          "frames": [
+            30
+          ],
+          "note": "thinking pose"
+        },
+        "show": {
+          "frames": [
+            22
+          ],
+          "note": "show / point pose"
+        },
+        "side": {
+          "frames": [
+            15
+          ],
+          "note": "side-facing static"
+        },
+        "back": {
+          "frames": [
+            9
+          ],
+          "note": "back-facing static"
+        },
+        "wide": {
+          "frames": [
+            34
+          ],
+          "note": "wide-stance pose"
+        },
+        "behindBack": {
+          "frames": [
+            23
+          ],
+          "note": "hands behind back"
+        },
+        "down": {
+          "frames": [
+            31
+          ],
+          "note": "looking down"
+        },
+        "drag": {
+          "frames": [
+            32
+          ],
+          "note": "dragging something"
+        }
       }
     }
   ],
@@ -769,6 +974,14 @@
       "hdPath": "assets/sprites/character/PNG/Poses HD/character_femaleAdventurer_wide.png",
       "hdWidth": 192,
       "hdHeight": 256
+    },
+    {
+      "key": "char_head",
+      "path": "assets/sprites/character/PNG/Parts/head.png",
+      "category": "character",
+      "variant": "femaleAdventurer",
+      "pose": "head",
+      "notes": "Isolated head sprite for HUD icon use"
     }
   ],
   "companion": [

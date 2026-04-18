@@ -1,0 +1,24 @@
+import TitleScene   from '../scenes/TitleScene.js';
+import GameScene    from '../scenes/GameScene.js';
+import GameOverScene from '../scenes/GameOverScene.js';
+
+const gameConfig = {
+  type: Phaser.AUTO,
+  width: 1280,
+  height: 720,
+  backgroundColor: '#1a1a2e',
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 800 },
+      debug: true   // toggle at runtime with G key
+    }
+  },
+  scene: [TitleScene, GameScene, GameOverScene]
+};
+
+export default gameConfig;
