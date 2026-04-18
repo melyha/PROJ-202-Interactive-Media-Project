@@ -1,3 +1,5 @@
+import { Frog } from '../entities/Enemy.js';
+
 // ── CONSTANTS ───────────────────────────────────────────────────────────────
 const MOVE_SPEED       = 250;
 const JUMP_VEL         = -600;
@@ -66,6 +68,8 @@ export default class GameScene extends Phaser.Scene {
     this.lastConversionThreshold = 0;
     this.conversionBannerObjs    = [];
     this.readyBannerObjs         = [];
+
+    this.enemies = [];
   }
 
   // ── PRELOAD ───────────────────────────────────────────────────────────────
@@ -410,6 +414,12 @@ export default class GameScene extends Phaser.Scene {
 
     // ── Character head — from PNG/Parts/, used for HUD icon ───────────────
     this.load.image('char_head', 'assets/sprites/character/PNG/Parts/head.png');
+
+    // ── Enemy sprites ──────────────────────────────────────────────────────
+    this.load.image('frog',      'assets/sprites/enemy/frog.png');
+    this.load.image('frog_leap', 'assets/sprites/enemy/frog_leap.png');
+    this.load.image('frog_hit',  'assets/sprites/enemy/frog_hit.png');
+    this.load.image('frog_dead', 'assets/sprites/enemy/frog_dead.png');
   }
 
   // ── CREATE ─────────────────────────────────────────────────────────────────
@@ -449,6 +459,7 @@ export default class GameScene extends Phaser.Scene {
     this.starGlowTween          = null;
     this.conversionBannerObjs   = [];
     this.readyBannerObjs        = [];
+    this.enemies                = [];
 
     // ── Level dimensions from editor JSON ──────────────────────────────────
     const levelData = this.cache.json.get('level1');
@@ -514,6 +525,22 @@ export default class GameScene extends Phaser.Scene {
       }
       s.refreshBody();
     });
+
+    // ── Enemies ─────────────────────────────────────────────────────────────
+    // FROG 1 — patrol zone x 784–1184, centered x 984, ground y 690
+    const frog1 = new Frog(this, 984, 748);
+    frog1.patrolRange = 300;
+    this.enemies.push(frog1);
+
+    // FROG 2 — patrol zone x 1991–2391, centered x 2191, ground y 690
+    const frog2 = new Frog(this, 2191, 748);
+    frog2.patrolRange = 200;
+    this.enemies.push(frog2);
+
+    // FROG 3 — elevated patrol, centered x 1112, y 80
+    const frog3 = new Frog(this, 1250, 108);
+    frog3.patrolRange = 120;
+    this.enemies.push(frog3);
 
     // ── Player ──────────────────────────────────────────────────────────────
     this.player = this.physics.add.sprite(100, 700, 'player');
@@ -725,6 +752,50 @@ export default class GameScene extends Phaser.Scene {
         if (this.companionIsFront) {
           this.companionIsFront = false;
           this.companion.setTexture('character_purple_idle');
+        }
+      }
+    }
+
+    // ── Enemy update + player collision ───────────────────────────────────
+    for (const enemy of this.enemies) {
+      if (!enemy.alive) continue;
+
+      enemy.update(time, delta);
+
+      // Distance-based player contact check
+      const dist = Phaser.Math.Distance.Between(
+        this.player.x, this.player.y,
+        enemy.sprite.x, enemy.sprite.y
+      );
+
+      if (dist < 48 && !this.isInvincible && !this.isDead) {
+        // Stomp check — player falling and above enemy
+        const stomping = this.player.body.velocity.y > 0 &&
+                         this.player.y < enemy.sprite.y - 20;
+
+        if (stomping) {
+          this.player.setVelocityY(-350);
+          enemy.takeDamage();
+          this.coinCount++;
+          if (this.hudCoinsText)
+            this.hudCoinsText.setText(String(this.coinCount));
+        } else {
+          // Side/body contact — player takes damage
+          this.onHazard(this.player, enemy.sprite);
+        }
+      }
+
+      // Attack zone contact — J or K kills enemy
+      if (this.attackState === 'active' && enemy.alive) {
+        const attackDist = Phaser.Math.Distance.Between(
+          this.attackZone.x, this.attackZone.y,
+          enemy.sprite.x, enemy.sprite.y
+        );
+        if (attackDist < 80) {
+          enemy.takeDamage();
+          this.coinCount++;
+          if (this.hudCoinsText)
+            this.hudCoinsText.setText(String(this.coinCount));
         }
       }
     }
