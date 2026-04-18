@@ -4,7 +4,7 @@ export default class TitleScene extends Phaser.Scene {
   }
 
   create() {
-    this.cameras.main.setBackgroundColor('#c8e8f0');
+    this.cameras.main.setBackgroundColor('#1A0A2E');
 
     const title = this.add.text(640, 160, 'ENIGMA', {
       fontFamily: '"Press Start 2P"',
@@ -24,7 +24,7 @@ export default class TitleScene extends Phaser.Scene {
       ease: 'Sine.InOut'
     });
 
-    this.add.text(640, 240, 'A game by Maevea', {
+    this.add.text(640, 240, 'A game by Melyha', {
       fontFamily: '"Press Start 2P"',
       fontSize: '12px',
       color: '#ffffff',

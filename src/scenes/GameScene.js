@@ -1149,9 +1149,32 @@ export default class GameScene extends Phaser.Scene {
 
     this.cameras.main.shake(400, 0.02);
 
+    // Black overlay fades in (depth 45 = below text at 50)
+    const overlay = this.add.rectangle(640, 360, 1280, 720, 0x000000)
+      .setScrollFactor(0).setDepth(45).setAlpha(0);
+    this.tweens.add({ targets: overlay, alpha: 0.7, duration: 1000 });
+
     this.time.delayedCall(1500, () => {
-      this.scene.start('GameOverScene', {
-        score: (this.coinCount || 0) + (this.gemCount || 0)
+      const goText = this.add.text(640, 310, 'GAME OVER', {
+        fontFamily: '"Press Start 2P"',
+        fontSize: '48px',
+        color: '#ff0000',
+        stroke: '#000000',
+        strokeThickness: 6
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlpha(0);
+
+      const retryText = this.add.text(640, 410, 'PRESS SPACE TO RETRY', {
+        fontFamily: '"Press Start 2P"',
+        fontSize: '14px',
+        color: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 3
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlpha(0);
+
+      this.tweens.add({ targets: [goText, retryText], alpha: 1, duration: 500 });
+
+      this.input.keyboard.once('keydown-SPACE', () => {
+        this.scene.restart();
       });
     });
   }

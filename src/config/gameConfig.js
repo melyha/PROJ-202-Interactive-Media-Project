@@ -1,6 +1,5 @@
-import TitleScene   from '../scenes/TitleScene.js';
-import GameScene    from '../scenes/GameScene.js';
-import GameOverScene from '../scenes/GameOverScene.js';
+import TitleScene from '../scenes/TitleScene.js';
+import GameScene  from '../scenes/GameScene.js';
 
 const gameConfig = {
   type: Phaser.AUTO,
@@ -18,7 +17,7 @@ const gameConfig = {
       debug: true   // toggle at runtime with G key
     }
   },
-  scene: [TitleScene, GameScene, GameOverScene]
+  scene: [TitleScene, GameScene]
 };
 
 export default gameConfig;
