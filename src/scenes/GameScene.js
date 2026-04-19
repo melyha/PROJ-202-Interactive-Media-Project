@@ -801,6 +801,13 @@ export default class GameScene extends Phaser.Scene {
       this.companion.x += cx * (delta / 1000);
       this.companion.y += cy * (delta / 1000);
 
+      // ── Clamp companion to world bounds ──
+      const worldWidth  = this.physics.world.bounds.width;
+      const worldHeight = this.physics.world.bounds.height;
+      const pad = 32;
+      this.companion.x = Phaser.Math.Clamp(this.companion.x, pad, worldWidth  - pad);
+      this.companion.y = Phaser.Math.Clamp(this.companion.y, pad, worldHeight - pad);
+
       if (cx !== 0 || cy !== 0) {
         this.companionWalkTimer += delta;
         if (this.companionWalkTimer > 180) {
@@ -824,8 +831,8 @@ export default class GameScene extends Phaser.Scene {
     if (this.companion && this.companionReady) {
       this.hazardGroup.getChildren().forEach(hazard => {
         const key = hazard.texture?.key || '';
-        const isLava = key.startsWith('lava');
-        if (!isLava) return;
+        const isDangerous = key.startsWith('lava') || key === 'fireball';
+        if (!isDangerous) return;
 
         const d = Phaser.Math.Distance.Between(
           this.companion.x, this.companion.y,
@@ -1085,7 +1092,7 @@ export default class GameScene extends Phaser.Scene {
     if (key.startsWith('block'))   return 'block';
     if (key.startsWith('brick'))   return 'brick';
     if (key.startsWith('lava') || key === 'spikes' ||
-        key === 'saw' || key.startsWith('bomb') ||
+        key === 'saw' || key === 'fireball' || key.startsWith('bomb') ||
         key.startsWith('water'))   return 'hazard';
     if (key.startsWith('ladder'))  return 'ladder';
     if (key.startsWith('door'))    return 'door';
