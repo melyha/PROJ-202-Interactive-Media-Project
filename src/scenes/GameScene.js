@@ -70,6 +70,20 @@ export default class GameScene extends Phaser.Scene {
     this.readyBannerObjs         = [];
 
     this.enemies = [];
+
+    // ── Companion controls ─────────────────────────────────────────────────
+    // MODE A (default): player controlled, companion follows
+    // MODE B: companion controlled via cursors/wasd, player frozen
+    // TAB switches modes — only when companionReady = true
+    this.companionControlMode  = false;
+    this.tabKey                = null;
+    this.modeIndicator         = null;
+    this.companionSpeed        = 200;
+    this.companionWalkTimer    = 0;
+    this.companionEnergyTimer  = 0;
+    this.COMPANION_STAR_DURATION = 180000;  // 3 minutes in ms
+    this.mapFragmentFound      = false;
+    this.lockUsed              = false;
   }
 
   // ── PRELOAD ───────────────────────────────────────────────────────────────
@@ -409,8 +423,10 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('window', 'assets/sprites/tiles/window.png');
 
     // ── Companion sprites — 128×128px each ────────────────────────────────
-    this.load.image('character_purple_idle',  'assets/sprites/companion/character_purple_idle.png');
-    this.load.image('character_purple_front', 'assets/sprites/companion/character_purple_front.png');
+    this.load.image('character_purple_idle',   'assets/sprites/companion/character_purple_idle.png');
+    this.load.image('character_purple_front',  'assets/sprites/companion/character_purple_front.png');
+    this.load.image('character_purple_walk_a', 'assets/sprites/companion/character_purple_walk_a.png');
+    this.load.image('character_purple_walk_b', 'assets/sprites/companion/character_purple_walk_b.png');
 
     // ── Character head — from PNG/Parts/, used for HUD icon ───────────────
     this.load.image('char_head', 'assets/sprites/character/PNG/Parts/head.png');
@@ -460,6 +476,14 @@ export default class GameScene extends Phaser.Scene {
     this.conversionBannerObjs   = [];
     this.readyBannerObjs        = [];
     this.enemies                = [];
+    this.companionControlMode   = false;
+    this.modeIndicator          = null;
+    this.companionSpeed         = 200;
+    this.companionWalkTimer     = 0;
+    this.companionEnergyTimer   = 0;
+    this.COMPANION_STAR_DURATION = 180000;
+    this.mapFragmentFound       = false;
+    this.lockUsed               = false;
 
     // ── Level dimensions from editor JSON ──────────────────────────────────
     const levelData = this.cache.json.get('level1');
@@ -611,6 +635,10 @@ export default class GameScene extends Phaser.Scene {
     this.keyJ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J);
     this.keyK = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
 
+    // TAB — switches between MODE A (player) and MODE B (companion)
+    // Only active when companionReady = true
+    this.tabKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TAB);
+
     // When attack animation finishes: disable hitbox, enter cooldown, then ready
     this.player.on('animationcomplete', (animObj) => {
       if (animObj.key === 'attack' || animObj.key === 'kick') {
@@ -731,8 +759,8 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    // Companion follow
-    if (this.companion) {
+    // Companion follow — MODE A only (not when player is controlling companion)
+    if (this.companion && !this.companionControlMode) {
       const targetX = this.player.x - 80;
       const targetY = this.player.y - 60;
       this.companion.x += (targetX - this.companion.x) * 0.04;
@@ -754,6 +782,108 @@ export default class GameScene extends Phaser.Scene {
           this.companion.setTexture('character_purple_idle');
         }
       }
+    }
+
+    // ── Companion mode toggle (TAB) ───────────────────────────────────────
+    if (this.companionReady &&
+        Phaser.Input.Keyboard.JustDown(this.tabKey)) {
+      this.companionControlMode = !this.companionControlMode;
+
+      if (this.companionControlMode) {
+        // Switched TO companion mode (MODE B)
+        this.player.body.setVelocity(0, 0);
+        this.player.body.moves = false;
+        this.player.anims.play('idle', true);
+        this.showModeIndicator('SABLE');
+      } else {
+        // Switched BACK to player mode (MODE A)
+        this.player.body.moves = true;
+        this.companion.setTexture('character_purple_idle');
+        this.showModeIndicator('MAEVEA');
+      }
+    }
+
+    // ── Companion direct control — MODE B ─────────────────────────────────
+    if (this.companion && this.companionControlMode && this.companionReady) {
+      const compSpeed = 220;
+      const goLeft  = this.cursors.left.isDown  || this.wasd.left.isDown;
+      const goRight = this.cursors.right.isDown || this.wasd.right.isDown;
+      const goUp    = this.cursors.up.isDown    || this.wasd.up.isDown;
+      const goDown  = this.cursors.down.isDown;
+
+      let cx = 0, cy = 0;
+      if (goLeft)  cx = -compSpeed;
+      if (goRight) cx =  compSpeed;
+      if (goUp)    cy = -compSpeed;
+      if (goDown)  cy =  compSpeed;
+
+      this.companion.x += cx * (delta / 1000);
+      this.companion.y += cy * (delta / 1000);
+
+      if (cx !== 0 || cy !== 0) {
+        this.companionWalkTimer += delta;
+        if (this.companionWalkTimer > 180) {
+          this.companionWalkTimer = 0;
+          const cur = this.companion.texture.key;
+          this.companion.setTexture(
+            cur === 'character_purple_walk_a'
+              ? 'character_purple_walk_b'
+              : 'character_purple_walk_a'
+          );
+        }
+        if (cx < 0) this.companion.setFlipX(true);
+        if (cx > 0) this.companion.setFlipX(false);
+      } else {
+        this.companionWalkTimer = 0;
+        this.companion.setTexture('character_purple_idle');
+      }
+    }
+
+    // ── Energy timer + collectibles (runs whenever companionReady) ────────
+    if (this.companion && this.companionReady) {
+      // Energy timer — deplete one star per COMPANION_STAR_DURATION
+      this.companionEnergyTimer += delta;
+      if (this.companionEnergyTimer >= this.COMPANION_STAR_DURATION) {
+        this.companionEnergyTimer = 0;
+        if (this.companionStars > 1) {
+          this.companionStars--;
+          this.updateHudStars();
+        } else {
+          // No more stars — companion returns to follow mode
+          this.companionStars = 1;
+          this.updateHudStars();
+          this.companionReady = false;
+          this.companionOperating = false;
+          this.companionControlMode = false;
+          this.player.body.moves = true;
+        }
+      }
+
+      // Companion collectibles — gems and keys
+      this.collectiblesGroup.getChildren().forEach(item => {
+        if (!item.active) return;
+        const d = Phaser.Math.Distance.Between(
+          this.companion.x, this.companion.y, item.x, item.y);
+        if (d < 40) {
+          const texKey = item.texture.key;
+          if (texKey.startsWith('gem')) {
+            item.setActive(false).setVisible(false);
+            if (item.body) item.body.enable = false;
+            this.gemCount++;
+            if (this.hudGemsText)
+              this.hudGemsText.setText(String(this.gemCount));
+            this.showFloatingText(item.x, item.y - 30, '+GEM', '#88eeff');
+          } else if (texKey.startsWith('key_')) {
+            item.setActive(false).setVisible(false);
+            if (item.body) item.body.enable = false;
+            this.keysCollected++;
+            if (this.hudKeysText)
+              this.hudKeysText.setText(`${this.keysCollected}/${this.totalKeys}`);
+            this.showFloatingText(item.x, item.y - 30, 'KEY FOUND!', '#ffd700');
+            this.showKeyCollectedBanner();
+          }
+        }
+      });
     }
 
     // ── Enemy update + player collision ───────────────────────────────────
@@ -808,84 +938,87 @@ export default class GameScene extends Phaser.Scene {
     }
     const canJump = this.coyoteTimer > 0;
 
-    // Ladder
-    this.isOnLadder = this.physics.overlap(this.player, this.ladderGroup);
-    if (this.isOnLadder) {
-      this.player.body.setAllowGravity(false);
-      if (this.cursors.up.isDown || this.wasd.up.isDown) {
-        this.player.setVelocityY(-200);
-      } else if (this.cursors.down.isDown) {
-        this.player.setVelocityY(200);
-      } else {
-        this.player.setVelocityY(0);
-      }
-    } else {
-      this.player.body.setAllowGravity(true);
-    }
-
-    // Attack triggers
-    if (this.attackState === 'ready') {
-      if (Phaser.Input.Keyboard.JustDown(this.keyJ)) {
-        this.attackState = 'active';
-        this.attackIsKick = false;
-        this.player.anims.play('attack', true);
-        this.attackZone.body.enable = true;
-      } else if (Phaser.Input.Keyboard.JustDown(this.keyK)) {
-        this.attackState = 'active';
-        this.attackIsKick = true;
-        this.player.anims.play('kick', true);
-        this.attackZone.body.enable = true;
-      }
-    }
-
-    // Attack zone tracking
-    if (this.attackState === 'active') {
-      const range = this.attackIsKick ? 60 : 80;
-      const dir = this.player.flipX ? -1 : 1;
-      this.attackZone.setPosition(
-        this.player.x + dir * (this.player.body.halfWidth + range / 2),
-        this.player.y + 10
-      );
-      this.attackZone.body.setSize(range, 60, true);
-    }
-
-    // Horizontal movement
-    const goLeft  = this.cursors.left.isDown  || this.wasd.left.isDown;
-    const goRight = this.cursors.right.isDown || this.wasd.right.isDown;
-
-    if (goLeft) {
-      this.player.setVelocityX(-MOVE_SPEED);
-      this.player.setFlipX(true);
-    } else if (goRight) {
-      this.player.setVelocityX(MOVE_SPEED);
-      this.player.setFlipX(false);
-    } else {
-      this.player.setVelocityX(0);
-    }
-
-    // Jump
-    const jumpPressed =
-      Phaser.Input.Keyboard.JustDown(this.cursors.up)    ||
-      Phaser.Input.Keyboard.JustDown(this.cursors.space) ||
-      Phaser.Input.Keyboard.JustDown(this.wasd.up);
-
-    if (jumpPressed && canJump) {
-      this.player.setVelocityY(JUMP_VEL);
-      this.coyoteTimer = 0;
-    }
-
-    // Animation state (gated — don't override attack/kick)
-    if (this.attackState === 'ready') {
-      let moveAnim;
+    // ── Player input — only in MODE A (player controlled) ────────────────
+    if (!this.companionControlMode) {
+      // Ladder
+      this.isOnLadder = this.physics.overlap(this.player, this.ladderGroup);
       if (this.isOnLadder) {
-        moveAnim = this.player.body.velocity.y !== 0 ? 'climb' : 'idle';
-      } else if (!onGround) {
-        moveAnim = this.player.body.velocity.y < 0 ? 'jump' : 'fall';
+        this.player.body.setAllowGravity(false);
+        if (this.cursors.up.isDown || this.wasd.up.isDown) {
+          this.player.setVelocityY(-200);
+        } else if (this.cursors.down.isDown) {
+          this.player.setVelocityY(200);
+        } else {
+          this.player.setVelocityY(0);
+        }
       } else {
-        moveAnim = this.player.body.velocity.x !== 0 ? 'run' : 'idle';
+        this.player.body.setAllowGravity(true);
       }
-      this.player.anims.play(moveAnim, true);
-    }
+
+      // Attack triggers
+      if (this.attackState === 'ready') {
+        if (Phaser.Input.Keyboard.JustDown(this.keyJ)) {
+          this.attackState = 'active';
+          this.attackIsKick = false;
+          this.player.anims.play('attack', true);
+          this.attackZone.body.enable = true;
+        } else if (Phaser.Input.Keyboard.JustDown(this.keyK)) {
+          this.attackState = 'active';
+          this.attackIsKick = true;
+          this.player.anims.play('kick', true);
+          this.attackZone.body.enable = true;
+        }
+      }
+
+      // Attack zone tracking
+      if (this.attackState === 'active') {
+        const range = this.attackIsKick ? 60 : 80;
+        const dir = this.player.flipX ? -1 : 1;
+        this.attackZone.setPosition(
+          this.player.x + dir * (this.player.body.halfWidth + range / 2),
+          this.player.y + 10
+        );
+        this.attackZone.body.setSize(range, 60, true);
+      }
+
+      // Horizontal movement
+      const goLeft  = this.cursors.left.isDown  || this.wasd.left.isDown;
+      const goRight = this.cursors.right.isDown || this.wasd.right.isDown;
+
+      if (goLeft) {
+        this.player.setVelocityX(-MOVE_SPEED);
+        this.player.setFlipX(true);
+      } else if (goRight) {
+        this.player.setVelocityX(MOVE_SPEED);
+        this.player.setFlipX(false);
+      } else {
+        this.player.setVelocityX(0);
+      }
+
+      // Jump
+      const jumpPressed =
+        Phaser.Input.Keyboard.JustDown(this.cursors.up)    ||
+        Phaser.Input.Keyboard.JustDown(this.cursors.space) ||
+        Phaser.Input.Keyboard.JustDown(this.wasd.up);
+
+      if (jumpPressed && canJump) {
+        this.player.setVelocityY(JUMP_VEL);
+        this.coyoteTimer = 0;
+      }
+
+      // Animation state (gated — don't override attack/kick)
+      if (this.attackState === 'ready') {
+        let moveAnim;
+        if (this.isOnLadder) {
+          moveAnim = this.player.body.velocity.y !== 0 ? 'climb' : 'idle';
+        } else if (!onGround) {
+          moveAnim = this.player.body.velocity.y < 0 ? 'jump' : 'fall';
+        } else {
+          moveAnim = this.player.body.velocity.x !== 0 ? 'run' : 'idle';
+        }
+        this.player.anims.play(moveAnim, true);
+      }
+    } // end !companionControlMode
 
     // G key — toggle physics hitbox overlay
     if (Phaser.Input.Keyboard.JustDown(this.keyG)) {
@@ -1184,6 +1317,43 @@ export default class GameScene extends Phaser.Scene {
       }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(30);
 
     this.readyBannerObjs = [bg, txt];
+  }
+
+  showModeIndicator(name) {
+    if (this.modeIndicator) {
+      this.modeIndicator.forEach(e => e.destroy());
+      this.modeIndicator = null;
+    }
+    const label = name === 'SABLE'
+      ? '[ SABLE ]  TAB to switch back'
+      : '[ MAEVEA ]  TAB to switch';
+    const color = name === 'SABLE' ? '#c8aaff' : '#f5c8a0';
+    const bg = this.add.rectangle(640, 708, 440, 28, 0x000000, 0.7)
+      .setScrollFactor(0).setDepth(25);
+    const txt = this.add.text(640, 708, label, {
+      fontFamily: '"Press Start 2P"', fontSize: '7px', color
+    }).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(26);
+    this.modeIndicator = [bg, txt];
+    this.time.delayedCall(2500, () => {
+      if (this.modeIndicator) {
+        this.modeIndicator.forEach(e => e.destroy());
+        this.modeIndicator = null;
+      }
+    });
+  }
+
+  showKeyCollectedBanner() {
+    const CW = 1280;
+    const bg = this.add.rectangle(CW / 2, 20, CW, 40, 0x1a0a2e, 0.92)
+      .setScrollFactor(0).setDepth(30);
+    const txt = this.add.text(CW / 2, 20,
+      '\u2736 Key obtained! Find the lock to unlock the exit.', {
+        fontFamily: '"Press Start 2P"', fontSize: '7px', color: '#ffd700'
+      }).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(30);
+    this.time.delayedCall(4000, () => {
+      bg.destroy();
+      txt.destroy();
+    });
   }
 
   clearLastLifeWarning() {
