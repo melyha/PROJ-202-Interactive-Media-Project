@@ -484,6 +484,7 @@ export default class GameScene extends Phaser.Scene {
     this.COMPANION_STAR_DURATION = 180000;
     this.mapFragmentFound       = false;
     this.lockUsed               = false;
+    this.companionInvincible    = false;
 
     // ── Level dimensions from editor JSON ──────────────────────────────────
     const levelData = this.cache.json.get('level1');
@@ -732,33 +733,6 @@ export default class GameScene extends Phaser.Scene {
     // Skip all input / physics during death sequence or popup
     if (this.isDead || this.conversionPopupOpen) return;
 
-    // Ready banner dismiss — triggers when companion first moves after OK
-    if (this.companionReady && !this.companionOperating && Math.abs(this.player.body.velocity.x) > 5) {
-      this.companionOperating = true;
-      if (this.readyBannerObjs.length > 0) {
-        this.readyBannerObjs.forEach(e => e.destroy());
-        this.readyBannerObjs = [];
-      }
-      if (this.hudStars.length > 0) {
-        if (this.starGlowTween) { this.starGlowTween.stop(); this.starGlowTween = null; }
-        this.tweens.add({
-          targets: this.hudStars,
-          scaleX: 0.46, scaleY: 0.46,
-          duration: 200,
-          yoyo: true,
-          ease: 'Sine.InOut',
-          onComplete: () => {
-            if (this.companionStars === 3 && this.hudStars.length > 0) {
-              this.starGlowTween = this.tweens.add({
-                targets: this.hudStars, scaleX: 0.44, scaleY: 0.44,
-                duration: 800, yoyo: true, repeat: -1, ease: 'Sine.InOut'
-              });
-            }
-          }
-        });
-      }
-    }
-
     // Companion follow — MODE A only (not when player is controlling companion)
     if (this.companion && !this.companionControlMode) {
       const targetX = this.player.x - 80;
@@ -794,11 +768,18 @@ export default class GameScene extends Phaser.Scene {
         this.player.body.setVelocity(0, 0);
         this.player.body.moves = false;
         this.player.anims.play('idle', true);
+        this.cameras.main.startFollow(this.companion, true, 0.1, 0.1);
+        // Dismiss ready banner on first TAB press
+        if (this.readyBannerObjs && this.readyBannerObjs.length > 0) {
+          this.readyBannerObjs.forEach(e => e.destroy());
+          this.readyBannerObjs = [];
+        }
         this.showModeIndicator('SABLE');
       } else {
         // Switched BACK to player mode (MODE A)
         this.player.body.moves = true;
         this.companion.setTexture('character_purple_idle');
+        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
         this.showModeIndicator('MAEVEA');
       }
     }
@@ -837,6 +818,42 @@ export default class GameScene extends Phaser.Scene {
         this.companionWalkTimer = 0;
         this.companion.setTexture('character_purple_idle');
       }
+    }
+
+    // ── Companion lava damage ─────────────────────────────────────────────
+    if (this.companion && this.companionReady) {
+      this.hazardGroup.getChildren().forEach(hazard => {
+        const key = hazard.texture?.key || '';
+        const isLava = key.startsWith('lava');
+        if (!isLava) return;
+
+        const d = Phaser.Math.Distance.Between(
+          this.companion.x, this.companion.y,
+          hazard.x, hazard.y
+        );
+
+        if (d < 50 && !this.companionInvincible) {
+          this.companionInvincible = true;
+          this.companionLives--;
+          this.updateCompanionHearts();
+
+          if (this.companionLives <= 0) {
+            this.triggerCompanionDeath();
+          } else {
+            this.tweens.add({
+              targets: this.companion,
+              alpha: 0.2,
+              duration: 100,
+              yoyo: true,
+              repeat: 5,
+              onComplete: () => {
+                if (this.companion) this.companion.setAlpha(1);
+                this.companionInvincible = false;
+              }
+            });
+          }
+        }
+      });
     }
 
     // ── Energy timer + collectibles (runs whenever companionReady) ────────
@@ -1231,8 +1248,8 @@ export default class GameScene extends Phaser.Scene {
       stroke: '#000000', strokeThickness: 3, align: 'center'
     }).setOrigin(0.5).setScrollFactor(0).setDepth(61);
 
-    const okBtn = this.add.text(PX, PY + 44, '[ OK ]', {
-      fontFamily: '"Press Start 2P"', fontSize: '12px', color: '#ffd700',
+    const okBtn = this.add.text(PX, PY + 44, '[ USE TAB TO SWITCH TO COMPANION ]', {
+      fontFamily: '"Press Start 2P"', fontSize: '8px', color: '#ffd700',
       stroke: '#000000', strokeThickness: 2, backgroundColor: '#332200',
       padding: { x: 10, y: 6 }
     }).setOrigin(0.5).setScrollFactor(0).setDepth(61).setInteractive({ useHandCursor: true });
@@ -1312,7 +1329,7 @@ export default class GameScene extends Phaser.Scene {
     const bg  = this.add.rectangle(CW / 2, bannerY + 20, CW, 40, 0x1a0a2e, 0.88)
       .setScrollFactor(0).setDepth(30);
     const txt = this.add.text(12, bannerY + 20,
-      '\u2736 Companion ready to operate!', {
+      '\u2736 Companion ready!  Press TAB to switch control', {
         fontFamily: '"Press Start 2P"', fontSize: '7px', color: '#c8aaff'
       }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(30);
 
@@ -1366,6 +1383,74 @@ export default class GameScene extends Phaser.Scene {
       this.vignetteGfx.destroy();
       this.vignetteGfx = null;
     }
+  }
+
+  triggerCompanionDeath() {
+    if (this.isDead) return;
+    this.isDead = true;
+
+    // Switch camera back to player and restore player control
+    this.companionControlMode = false;
+    this.player.body.moves = false;
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+
+    // Companion death tween — spin and fall
+    if (this.companion) {
+      this.tweens.add({
+        targets: this.companion,
+        angle: 360,
+        y: this.companion.y + 250,
+        alpha: 0,
+        duration: 900,
+        ease: 'Cubic.In',
+        onComplete: () => {
+          if (this.companion) this.companion.destroy();
+          this.companion = null;
+        }
+      });
+    }
+
+    this.cameras.main.shake(400, 0.02);
+
+    const overlay = this.add.rectangle(640, 360, 1280, 720, 0x000000)
+      .setScrollFactor(0).setDepth(45).setAlpha(0);
+    this.tweens.add({ targets: overlay, alpha: 0.7, duration: 1000 });
+
+    this.time.delayedCall(1500, () => {
+      const goText = this.add.text(640, 280, 'SABLE FELL...', {
+        fontFamily: '"Press Start 2P"',
+        fontSize: '36px',
+        color: '#cc44ff',
+        stroke: '#000000',
+        strokeThickness: 6
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlpha(0);
+
+      const subText = this.add.text(640, 350, 'GAME OVER', {
+        fontFamily: '"Press Start 2P"',
+        fontSize: '24px',
+        color: '#ff0000',
+        stroke: '#000000',
+        strokeThickness: 4
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlpha(0);
+
+      const retryText = this.add.text(640, 430, 'PRESS SPACE TO RETRY', {
+        fontFamily: '"Press Start 2P"',
+        fontSize: '14px',
+        color: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 3
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlpha(0);
+
+      this.tweens.add({
+        targets: [goText, subText, retryText],
+        alpha: 1,
+        duration: 500
+      });
+
+      this.input.keyboard.once('keydown-SPACE', () => {
+        this.scene.restart();
+      });
+    });
   }
 
   triggerDeathSequence() {
