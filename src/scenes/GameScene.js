@@ -84,6 +84,8 @@ export default class GameScene extends Phaser.Scene {
     this.COMPANION_STAR_DURATION = 180000;  // 3 minutes in ms
     this.mapFragmentFound      = false;
     this.lockUsed              = false;
+    this.lockGroup             = null;
+    this.lockHintCooldown      = false;
   }
 
   // ── PRELOAD ───────────────────────────────────────────────────────────────
@@ -436,6 +438,9 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('frog_leap', 'assets/sprites/enemy/frog_leap.png');
     this.load.image('frog_hit',  'assets/sprites/enemy/frog_hit.png');
     this.load.image('frog_dead', 'assets/sprites/enemy/frog_dead.png');
+
+    // ── Map fragment image — placeholder used if file not present ──────────
+    this.load.image('map_fragment_1', 'assets/images/map_fragment_1.png');
   }
 
   // ── CREATE ─────────────────────────────────────────────────────────────────
@@ -484,6 +489,8 @@ export default class GameScene extends Phaser.Scene {
     this.COMPANION_STAR_DURATION = 180000;
     this.mapFragmentFound       = false;
     this.lockUsed               = false;
+    this.lockGroup              = null;
+    this.lockHintCooldown       = false;
     this.companionInvincible    = false;
 
     // ── Level dimensions from editor JSON ──────────────────────────────────
@@ -518,6 +525,7 @@ export default class GameScene extends Phaser.Scene {
     this.ladderGroup       = this.physics.add.staticGroup();
     this.doorGroup         = this.physics.add.staticGroup();
     this.collectiblesGroup = this.physics.add.staticGroup();
+    this.lockGroup         = this.physics.add.staticGroup();
 
     // ── Count total key tiles ───────────────────────────────────────────────
     this.totalKeys = levelData.tiles.filter(t => t.key.startsWith('key_')).length;
@@ -545,6 +553,8 @@ export default class GameScene extends Phaser.Scene {
         s = this.doorGroup.create(tile.x, tile.y, tile.key);
       } else if (cat === 'collectible') {
         s = this.collectiblesGroup.create(tile.x, tile.y, tile.key);
+      } else if (cat === 'lock') {
+        s = this.lockGroup.create(tile.x, tile.y, tile.key);
       } else {
         s = this.platformsGroup.create(tile.x, tile.y, tile.key);
       }
@@ -590,6 +600,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.physics.add.collider(this.player, this.doorGroup, this.onDoor, null, this);
+    this.physics.add.collider(this.player, this.lockGroup);
     this.physics.add.overlap(this.player, this.hazardGroup, this.onHazard, null, this);
     this.physics.add.overlap(this.player, this.collectiblesGroup, this.onCollect, null, this);
 
@@ -954,6 +965,26 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
+    // ── Lock proximity check (player mode only) ───────────────────────────
+    if (!this.lockUsed && !this.companionControlMode && this.lockGroup) {
+      this.lockGroup.getChildren().forEach(lockTile => {
+        if (!lockTile.active || this.lockUsed) return;
+        const d = Phaser.Math.Distance.Between(
+          this.player.x, this.player.y, lockTile.x, lockTile.y
+        );
+        if (d < 64) {
+          if (this.totalKeys === 0 || this.keysCollected >= this.totalKeys) {
+            this.lockUsed = true;
+            this.showLockPopup(lockTile);
+          } else if (!this.lockHintCooldown) {
+            this.lockHintCooldown = true;
+            this.showFloatingText(lockTile.x, lockTile.y - 48, 'Need a key first!', '#ff4444');
+            this.time.delayedCall(2000, () => { this.lockHintCooldown = false; });
+          }
+        }
+      });
+    }
+
     // Coyote time
     if (onGround) {
       this.coyoteTimer = COYOTE_MS;
@@ -1099,7 +1130,7 @@ export default class GameScene extends Phaser.Scene {
     if (key.startsWith('coin'))    return 'collectible';
     if (key.startsWith('gem'))     return 'collectible';
     if (key.startsWith('key_'))    return 'collectible';
-    if (key.startsWith('lock'))    return 'terrain';
+    if (key.startsWith('lock'))    return 'lock';
     return 'terrain';
   }
 
@@ -1641,6 +1672,184 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  showLockPopup(lockTile) {
+    this.conversionPopupOpen = true;
+    this.player.body.moves = false;
+
+    const PX = 640, PY = 360;
+    const panel  = this.add.rectangle(PX, PY, 480, 180, 0x000033, 0.88)
+      .setScrollFactor(0).setDepth(60);
+    const border = this.add.graphics().setScrollFactor(0).setDepth(60);
+    border.lineStyle(2, 0xffd700, 1);
+    border.strokeRect(PX - 240, PY - 90, 480, 180);
+
+    const msg = this.add.text(PX, PY - 28, 'Map Fragment Found!\nUnlock the exit?', {
+      fontFamily: '"Press Start 2P"', fontSize: '13px', color: '#ffd700',
+      stroke: '#000000', strokeThickness: 3, align: 'center'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(61);
+
+    const unlockBtn = this.add.text(PX, PY + 52, '[ UNLOCK ]', {
+      fontFamily: '"Press Start 2P"', fontSize: '12px', color: '#00ff88',
+      stroke: '#000000', strokeThickness: 2, backgroundColor: '#003311',
+      padding: { x: 12, y: 8 }
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(61).setInteractive({ useHandCursor: true });
+
+    const elements = [panel, border, msg, unlockBtn];
+
+    unlockBtn.on('pointerdown', () => {
+      elements.forEach(e => e.destroy());
+      this.conversionPopupOpen = false;
+      this.player.body.moves = true;
+      lockTile.setActive(false).setVisible(false);
+      if (lockTile.body) lockTile.body.enable = false;
+      this.showMapFragmentPopup();
+    });
+
+    unlockBtn.on('pointerover', () => unlockBtn.setColor('#ffffff'));
+    unlockBtn.on('pointerout',  () => unlockBtn.setColor('#00ff88'));
+  }
+
+  showMapFragmentPopup() {
+    this.conversionPopupOpen = true;
+    this.player.body.moves = false;
+
+    const PX = 640, PY = 360;
+    const elements = [];
+
+    const panel = this.add.rectangle(PX, PY, 700, 450, 0x050f05, 0.95)
+      .setScrollFactor(0).setDepth(60);
+    elements.push(panel);
+
+    const border = this.add.graphics().setScrollFactor(0).setDepth(60);
+    border.lineStyle(2, 0xffd700, 1);
+    border.strokeRect(PX - 350, PY - 225, 700, 450);
+    elements.push(border);
+
+    const title = this.add.text(PX, PY - 190, 'Map Fragment Recovered!', {
+      fontFamily: '"Press Start 2P"', fontSize: '13px', color: '#ffd700',
+      stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(61);
+    elements.push(title);
+
+    // Image area — use loaded asset if available, placeholder rect otherwise
+    let glowTarget;
+    if (this.textures.exists('map_fragment_1')) {
+      glowTarget = this.add.image(PX, PY - 30, 'map_fragment_1')
+        .setScrollFactor(0).setDepth(61).setDisplaySize(400, 260);
+      elements.push(glowTarget);
+    } else {
+      const placeholder = this.add.rectangle(PX, PY - 30, 400, 260, 0x1a2a1a)
+        .setScrollFactor(0).setDepth(61);
+      elements.push(placeholder);
+      glowTarget = placeholder;
+      const placeholderTxt = this.add.text(PX, PY - 30, '[ Map Fragment ]', {
+        fontFamily: '"Press Start 2P"', fontSize: '10px', color: '#44aa44'
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(62);
+      elements.push(placeholderTxt);
+    }
+
+    // Golden glow tween on the image / placeholder
+    this.tweens.add({
+      targets: glowTarget,
+      alpha: 0.6,
+      duration: 600,
+      yoyo: true,
+      repeat: -1
+    });
+
+    const subText = this.add.text(PX, PY + 145, 'The path forward is revealed...', {
+      fontFamily: '"Press Start 2P"', fontSize: '8px', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 2
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(61);
+    elements.push(subText);
+
+    const contBtn = this.add.text(PX, PY + 190, '[ CONTINUE ]', {
+      fontFamily: '"Press Start 2P"', fontSize: '12px', color: '#ffd700',
+      stroke: '#000000', strokeThickness: 2, backgroundColor: '#332200',
+      padding: { x: 12, y: 8 }
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(61).setInteractive({ useHandCursor: true });
+    elements.push(contBtn);
+
+    contBtn.on('pointerdown', () => {
+      this.tweens.killTweensOf(glowTarget);
+      elements.forEach(e => e.destroy());
+      this.conversionPopupOpen = false;
+      this.player.body.moves = true;
+      this.mapFragmentFound = true;
+      this.showFloatingText(this.player.x, this.player.y - 80, 'EXIT UNLOCKED!', '#ffd700');
+    });
+
+    contBtn.on('pointerover', () => contBtn.setColor('#ffffff'));
+    contBtn.on('pointerout',  () => contBtn.setColor('#ffd700'));
+  }
+
+  triggerWinSequence() {
+    this.isDead = true;   // stops update() input processing
+
+    this.player.body.moves = false;
+    this.player.body.setVelocity(0, 0);
+    this.companionReady = false;
+
+    // White flash
+    const flash = this.add.rectangle(640, 360, 1280, 720, 0xffffff)
+      .setScrollFactor(0).setDepth(45).setAlpha(0);
+    this.tweens.add({ targets: flash, alpha: 0.8, duration: 800 });
+
+    this.time.delayedCall(1000, () => {
+      flash.destroy();
+
+      const overlay = this.add.rectangle(640, 360, 1280, 720, 0x0a1a0a)
+        .setScrollFactor(0).setDepth(48).setAlpha(0);
+      this.tweens.add({ targets: overlay, alpha: 1, duration: 400 });
+
+      this.time.delayedCall(400, () => {
+        const winText = this.add.text(640, 200, 'YOU ESCAPED!', {
+          fontFamily: '"Press Start 2P"',
+          fontSize: '48px',
+          color: '#ffd700',
+          stroke: '#000000',
+          strokeThickness: 6
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlpha(0);
+
+        const charHead = this.add.image(570, 300, 'char_head')
+          .setScale(1.5).setScrollFactor(0).setDepth(50).setAlpha(0);
+        const compHead = this.add.image(710, 300, 'hud_player_purple')
+          .setScale(1.5).setScrollFactor(0).setDepth(50).setAlpha(0);
+
+        const nameText = this.add.text(640, 380, 'Maevea and Sable made it out.', {
+          fontFamily: '"Press Start 2P"',
+          fontSize: '10px',
+          color: '#ffffff',
+          stroke: '#000000',
+          strokeThickness: 2
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlpha(0);
+
+        const playAgainBtn = this.add.text(640, 460, '[ PLAY AGAIN ]', {
+          fontFamily: '"Press Start 2P"',
+          fontSize: '14px',
+          color: '#ffd700',
+          stroke: '#000000',
+          strokeThickness: 3,
+          backgroundColor: '#332200',
+          padding: { x: 12, y: 8 }
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlpha(0)
+          .setInteractive({ useHandCursor: true });
+
+        this.tweens.add({
+          targets: [winText, charHead, compHead, nameText, playAgainBtn],
+          alpha: 1,
+          duration: 600
+        });
+
+        playAgainBtn.on('pointerdown', () => { this.scene.restart(); });
+        playAgainBtn.on('pointerover',  () => playAgainBtn.setColor('#ffffff'));
+        playAgainBtn.on('pointerout',   () => playAgainBtn.setColor('#ffd700'));
+
+        this.input.keyboard.once('keydown-SPACE', () => { this.scene.restart(); });
+      });
+    });
+  }
+
   onCollect(playerObj, item) {
     if (!item.active) return;
     item.setActive(false);
@@ -1674,13 +1883,13 @@ export default class GameScene extends Phaser.Scene {
     if (this.levelComplete || this.doorCooldown) return;
     this.doorCooldown = true;
     this.time.delayedCall(2000, () => { this.doorCooldown = false; });
-    if (this.keysCollected >= this.totalKeys) {
+    if (this.mapFragmentFound && this.keysCollected >= this.totalKeys) {
       this.levelComplete = true;
-      this.time.delayedCall(50, () => { this.doorGroup.clear(true, true); });
-      this.showFloatingText(door.x, door.y - 64, 'LEVEL COMPLETE!', '#ffff00');
-      console.log('LEVEL COMPLETE');
+      this.triggerWinSequence();
+    } else if (this.keysCollected < this.totalKeys) {
+      this.showFloatingText(door.x, door.y - 64, 'Find the key first!', '#ff4444');
     } else {
-      this.showFloatingText(door.x, door.y - 64, 'FIND ALL KEYS FIRST', '#ff4444');
+      this.showFloatingText(door.x, door.y - 64, 'Find the map fragment first!', '#ff4444');
     }
   }
 }
