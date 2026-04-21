@@ -1,4 +1,5 @@
 import TitleScene from '../scenes/TitleScene.js';
+import IntroScene from '../scenes/IntroScene.js';
 import GameScene  from '../scenes/GameScene.js';
 
 const gameConfig = {
@@ -17,7 +18,7 @@ const gameConfig = {
       debug: true   // toggle at runtime with G key
     }
   },
-  scene: [TitleScene, GameScene]
+  scene: [TitleScene, IntroScene, GameScene]
 };
 
 export default gameConfig;

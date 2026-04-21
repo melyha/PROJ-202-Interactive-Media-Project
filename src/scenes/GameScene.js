@@ -77,6 +77,7 @@ export default class GameScene extends Phaser.Scene {
     // TAB switches modes — only when companionReady = true
     this.companionControlMode  = false;
     this.tabKey                = null;
+    this.companionWASD         = null;
     this.modeIndicator         = null;
     this.companionSpeed        = 200;
     this.companionWalkTimer    = 0;
@@ -86,6 +87,9 @@ export default class GameScene extends Phaser.Scene {
     this.lockUsed              = false;
     this.lockGroup             = null;
     this.lockHintCooldown      = false;
+    this.sableTipShown         = false;
+    this.helpPanelOpen         = false;
+    this.helpElements          = [];
   }
 
   // ── PRELOAD ───────────────────────────────────────────────────────────────
@@ -644,8 +648,16 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.keyG = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.G);
-    this.keyJ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J);
-    this.keyK = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
+    this.keyJ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
+    this.keyK = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
+
+    // Dedicated companion keys — W/A/S/D for MODE B (player is frozen, no conflict)
+    this.companionWASD = this.input.keyboard.addKeys({
+      up:    Phaser.Input.Keyboard.KeyCodes.W,
+      left:  Phaser.Input.Keyboard.KeyCodes.A,
+      down:  Phaser.Input.Keyboard.KeyCodes.S,
+      right: Phaser.Input.Keyboard.KeyCodes.D
+    });
 
     // TAB — switches between MODE A (player) and MODE B (companion)
     // Only active when companionReady = true
@@ -661,61 +673,112 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // ── HUD ─────────────────────────────────────────────────────────────────
-    //  Row 1 (y=16):  char_head icon  +  3× player hearts   spacing=28
-    //  Row 2 (y=56):  companion icon  +  3× companion hearts spacing=28
-    //  Row 2.5 (y=96): companion energy stars
-    //  Row 3 (y=136): coins icon + count
-    //  Row 4 (y=176): gems icon + count
-    //  Row 5 (y=216): keys icon + count
-    const hudStyle = {
+    //  Panel covers y: 6–248, x: 6–196
+    //  Label "MAEVEA" y=8,  char_head + 3 hearts y=38
+    //  Label "SABLE"  y=48, companion icon + 3 hearts y=74
+    //  Stars y=96  |  Divider y=110
+    //  Row 4 (y=128): coin icon + count
+    //  Row 5 (y=158): gem icon + count
+    //  Row 6 (y=188): key icon + count
+
+    // Panel background
+    this.hudPanel = this.add.graphics().setScrollFactor(0).setDepth(19);
+    this.hudPanel.fillStyle(0x12001c, 0.88);
+    this.hudPanel.fillRoundedRect(6, 6, 190, 242, 10);
+    this.hudPanel.lineStyle(1, 0xd4c4e8, 0.3);
+    this.hudPanel.lineBetween(14, 110, 188, 110);
+
+    const hudTextStyle = {
       fontFamily: '"Press Start 2P"',
-      fontSize: '14px',
-      color: '#ffffff',
+      fontSize: '10px',
       stroke: '#000000',
       strokeThickness: 3
     };
 
+    // "MAEVEA" label
+    this.add.text(18, 8, 'MAEVEA', {
+      fontFamily: '"Press Start 2P"', fontSize: '7px', color: '#ffecd8',
+      resolution: 2
+    }).setScrollFactor(0).setDepth(20);
+
     // Row 1: Maevea — char_head icon + 3 player hearts
-    this.add.image(16, 16, 'char_head')
-      .setScale(0.5).setScrollFactor(0).setDepth(20);
+    this.add.image(18, 38, 'char_head')
+      .setScale(0.45).setScrollFactor(0).setDepth(20);
     for (let i = 0; i < 3; i++) {
       this.hudHearts.push(
-        this.add.image(44 + i * 28, 16, 'hud_heart')
-          .setScale(0.5).setScrollFactor(0).setDepth(20)
+        this.add.image(50 + i * 24, 38, 'hud_heart')
+          .setScale(0.45).setScrollFactor(0).setDepth(20)
       );
     }
+
+    // "SABLE" label
+    this.add.text(18, 48, 'SABLE', {
+      fontFamily: '"Press Start 2P"', fontSize: '7px', color: '#d4c4e8',
+      resolution: 2
+    }).setScrollFactor(0).setDepth(20);
 
     // Row 2: Sable — companion icon + 3 companion hearts
-    this.hudCompanionIcon = this.add.image(16, 56, 'hud_player_purple')
-      .setScale(0.5).setScrollFactor(0).setDepth(20);
+    this.hudCompanionIcon = this.add.image(18, 74, 'hud_player_purple')
+      .setScale(0.45).setScrollFactor(0).setDepth(20);
     for (let i = 0; i < 3; i++) {
       this.hudCompanionHearts.push(
-        this.add.image(44 + i * 28, 56, 'hud_heart')
-          .setScale(0.5).setScrollFactor(0).setDepth(20)
+        this.add.image(50 + i * 24, 74, 'hud_heart')
+          .setScale(0.45).setScrollFactor(0).setDepth(20)
       );
     }
 
-    // Row 3: Coins
-    this.add.image(16, 136, 'coin_gold')
-      .setScale(0.5).setScrollFactor(0).setDepth(20);
-    this.hudCoinsText = this.add.text(40, 136, '0', hudStyle)
-      .setOrigin(0, 0.5).setScrollFactor(0).setDepth(20);
+    // Row 4: Coins
+    this.add.image(18, 128, 'coin_gold')
+      .setScale(0.45).setScrollFactor(0).setDepth(20);
+    this.hudCoinsText = this.add.text(52, 128, '0', {
+      ...hudTextStyle, color: '#fac775'
+    }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(20);
 
-    // Row 4: Gems
-    this.add.image(16, 176, 'gem_yellow')
-      .setScale(0.5).setScrollFactor(0).setDepth(20);
-    this.hudGemsText = this.add.text(40, 176, '0', hudStyle)
-      .setOrigin(0, 0.5).setScrollFactor(0).setDepth(20);
+    // Row 5: Gems
+    this.add.image(18, 158, 'gem_yellow')
+      .setScale(0.45).setScrollFactor(0).setDepth(20);
+    this.hudGemsText = this.add.text(52, 158, '0', {
+      ...hudTextStyle, color: '#d4c4e8'
+    }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(20);
 
-    // Row 5: Keys
-    this.add.image(16, 216, 'hud_key_yellow')
-      .setScale(0.5).setScrollFactor(0).setDepth(20);
-    this.hudKeysText = this.add.text(40, 216, `0/${this.totalKeys}`, hudStyle)
-      .setOrigin(0, 0.5).setScrollFactor(0).setDepth(20);
+    // Row 6: Keys
+    this.add.image(18, 188, 'hud_key_yellow')
+      .setScale(0.45).setScrollFactor(0).setDepth(20);
+    this.hudKeysText = this.add.text(52, 188, `0/${this.totalKeys}`, {
+      ...hudTextStyle, color: '#d4c4e8'
+    }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(20);
 
     this.updatePlayerHearts();
     this.updateCompanionHearts();
     this.updateHudStars();
+
+    // ── Help button (? circle, top-right) ───────────────────────────────────
+    const helpCircle = this.add.graphics().setScrollFactor(0).setDepth(50);
+    helpCircle.fillStyle(0xcc2222, 1);
+    helpCircle.fillCircle(1248, 29, 18);
+    helpCircle.lineStyle(2, 0xff8888, 1);
+    helpCircle.strokeCircle(1248, 29, 18);
+    this.add.text(1248, 29, '?', {
+      fontFamily: '"Press Start 2P"', fontSize: '14px', color: '#ffffff',
+      resolution: 2
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(51)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => {
+        if (this.helpPanelOpen) this.closeHelpPanel(); else this.showHelpPanel();
+      });
+
+    // ── Show help panel on every load ────────────────────────────────────────
+    this.time.delayedCall(400, () => this.showHelpPanel());
+
+    // ── H key — toggle help panel ────────────────────────────────────────────
+    this.input.keyboard.on('keydown-H', () => {
+      if (this.helpPanelOpen) { this.closeHelpPanel(); } else { this.showHelpPanel(); }
+    });
+
+    // ── ESC key — close help panel if open ───────────────────────────────────
+    this.input.keyboard.on('keydown-ESC', () => {
+      if (this.helpPanelOpen) this.closeHelpPanel();
+    });
 
     // ── Debug overlay ────────────────────────────────────────────────────────
     this.debugText = this.add.text(1270, 10, '', {
@@ -786,6 +849,12 @@ export default class GameScene extends Phaser.Scene {
           this.readyBannerObjs = [];
         }
         this.showModeIndicator('SABLE');
+        // One-time tooltip on first TAB to companion
+        if (!this.sableTipShown) {
+          this.sableTipShown = true;
+          this.showFloatingText(this.companion.x, this.companion.y - 60,
+            'WASD or ARROWS to move Sable!', '#aa88ff');
+        }
       } else {
         // Switched BACK to player mode (MODE A)
         this.player.body.moves = true;
@@ -798,10 +867,10 @@ export default class GameScene extends Phaser.Scene {
     // ── Companion direct control — MODE B ─────────────────────────────────
     if (this.companion && this.companionControlMode && this.companionReady) {
       const compSpeed = 220;
-      const goLeft  = this.cursors.left.isDown  || this.wasd.left.isDown;
-      const goRight = this.cursors.right.isDown || this.wasd.right.isDown;
-      const goUp    = this.cursors.up.isDown    || this.wasd.up.isDown;
-      const goDown  = this.cursors.down.isDown;
+      const goLeft  = this.cursors.left.isDown  || this.companionWASD.left.isDown;
+      const goRight = this.cursors.right.isDown || this.companionWASD.right.isDown;
+      const goUp    = this.cursors.up.isDown    || this.companionWASD.up.isDown;
+      const goDown  = this.cursors.down.isDown  || this.companionWASD.down.isDown;
 
       let cx = 0, cy = 0;
       if (goLeft)  cx = -compSpeed;
@@ -1104,7 +1173,7 @@ export default class GameScene extends Phaser.Scene {
       `pos:      x:${String(px).padStart(5)}  y:${String(py).padStart(5)}\n` +
       `facing:   ${facing}\n` +
       `lives:${this.playerLives}  coins:${this.coinCount}  gems:${this.gemCount}  keys:${this.keysCollected}/${this.totalKeys}\n` +
-      `\n[J] attack  [K] kick  [G] hitboxes`
+      `\n[Z] attack  [X] kick  [G] hitboxes`
     );
   }
 
@@ -1228,27 +1297,37 @@ export default class GameScene extends Phaser.Scene {
       stroke: '#000000', strokeThickness: 2
     }).setOrigin(0.5).setScrollFactor(0).setDepth(61);
 
-    const yesBtn = this.add.text(PX - 110, PY + 38, '[ YES \u2014 Convert ]', {
+    const yesBtn = this.add.text(PX - 110, PY + 30, '[ Y \u2014 Convert ]', {
       fontFamily: '"Press Start 2P"', fontSize: '10px', color: '#00ff88',
       stroke: '#000000', strokeThickness: 2, backgroundColor: '#003311',
       padding: { x: 8, y: 6 }
     }).setOrigin(0.5).setScrollFactor(0).setDepth(61).setInteractive({ useHandCursor: true });
 
-    const noBtn = this.add.text(PX + 110, PY + 38, '[ Not Yet ]', {
+    const noBtn = this.add.text(PX + 110, PY + 30, '[ N \u2014 Skip ]', {
       fontFamily: '"Press Start 2P"', fontSize: '10px', color: '#ff6666',
       stroke: '#000000', strokeThickness: 2, backgroundColor: '#330011',
       padding: { x: 8, y: 6 }
     }).setOrigin(0.5).setScrollFactor(0).setDepth(61).setInteractive({ useHandCursor: true });
 
-    const elements = [panel, border, line1, line2, yesBtn, noBtn];
+    const hint = this.add.text(PX, PY + 68, 'Press Y or N', {
+      fontFamily: '"Press Start 2P"', fontSize: '8px', color: '#aaaaaa',
+      resolution: 2
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(61);
+
+    const elements = [panel, border, line1, line2, yesBtn, noBtn, hint];
+
+    const keyY = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Y);
+    const keyN = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.N);
 
     const closePopup = () => {
       elements.forEach(e => e.destroy());
+      keyY.destroy();
+      keyN.destroy();
       this.conversionPopupOpen = false;
       this.player.body.moves = true;
     };
 
-    yesBtn.on('pointerdown', () => {
+    const doYes = () => {
       closePopup();
       this.coinCount -= COINS_TO_CONVERT;
       if (this.hudCoinsText) this.hudCoinsText.setText(String(this.coinCount));
@@ -1256,13 +1335,19 @@ export default class GameScene extends Phaser.Scene {
       this.companionStars = Math.min(3, this.companionStars + 1);
       this.updateHudStars();
       this.showReadyPopup();
-    });
+    };
 
-    noBtn.on('pointerdown', () => {
+    const doNo = () => {
       closePopup();
       this.conversionAvailable = false;
       this.showConversionBanner();
-    });
+    };
+
+    yesBtn.on('pointerdown', doYes);
+    noBtn.on('pointerdown', doNo);
+
+    keyY.once('down', doYes);
+    keyN.once('down', doNo);
 
     yesBtn.on('pointerover',  () => yesBtn.setColor('#ffffff'));
     yesBtn.on('pointerout',   () => yesBtn.setColor('#00ff88'));
@@ -1306,22 +1391,114 @@ export default class GameScene extends Phaser.Scene {
     okBtn.on('pointerout',  () => okBtn.setColor('#ffd700'));
   }
 
+  showHelpPanel() {
+    if (this.helpPanelOpen) return;
+    this.helpPanelOpen = true;
+
+    const PX = 640, PY = 340;
+    const D = 71;  // depth for all elements
+
+    // ── Panel ──────────────────────────────────────────────────────────────
+    const panel = this.add.graphics().setScrollFactor(0).setDepth(70);
+    panel.fillStyle(0x12001c, 0.95);
+    panel.fillRoundedRect(PX - 330, PY - 215, 660, 360, 14);
+    panel.lineStyle(2, 0xf5d47a, 1);
+    panel.strokeRoundedRect(PX - 330, PY - 215, 660, 360, 14);
+    this.helpElements.push(panel);
+
+    // ── Title ──────────────────────────────────────────────────────────────
+    this.helpElements.push(
+      this.add.text(PX, PY - 192, 'HOW TO PLAY', {
+        fontFamily: '"Press Start 2P"', fontSize: '14px', color: '#f5d47a',
+        stroke: '#000000', strokeThickness: 3, resolution: 2
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(D)
+    );
+
+    // ── Two-column rows ────────────────────────────────────────────────────
+    //   Label column: x=345 (left-aligned)
+    //   Value column: x=470 (left-aligned)
+    const LX = 345, VX = 470;
+    const fs = '8px';
+    const push = (label, value, lc, vc, y) => {
+      if (label) {
+        this.helpElements.push(
+          this.add.text(LX, y, label, {
+            fontFamily: '"Press Start 2P"', fontSize: fs, color: lc, resolution: 2
+          }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(D)
+        );
+      }
+      this.helpElements.push(
+        this.add.text(VX, y, value, {
+          fontFamily: '"Press Start 2P"', fontSize: fs, color: vc, resolution: 2
+        }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(D)
+      );
+    };
+
+    const sep = (y) => {
+      const g = this.add.graphics().setScrollFactor(0).setDepth(D);
+      g.lineStyle(1, 0x4b1a60, 0.6);
+      g.lineBetween(LX, y, PX + 290, y);
+      this.helpElements.push(g);
+    };
+
+    // Controls
+    push('MOVE',    'ARROW KEYS / WASD',                 '#888888', '#ffecd8', PY - 162);
+    push('JUMP',    'SPACE',                              '#888888', '#ffecd8', PY - 140);
+    push('ATTACK',  'Z KEY',                              '#888888', '#ffecd8', PY - 118);
+    push('KICK',    'X KEY',                              '#888888', '#ffecd8', PY -  96);
+    push('HELP',    'H KEY \u2014 THIS PANEL',            '#888888', '#888888', PY -  74);
+
+    sep(PY - 56);
+
+    // Characters
+    push('MAEVEA',     '3 HEARTS \u00b7 ENEMIES, WATER, LAVA & FIRE DEAL DAMAGE', '#888888', '#ffecd8', PY - 44);
+    push('SABLE',      '3 HEARTS \u00b7 LAVA & FIRE DEAL DAMAGE',                 '#888888', '#d4c4e8', PY - 22);
+    push('SABLE DIES', 'TRIGGERS GAME OVER',                                       '#888888', '#ff8888', PY      );
+
+    sep(PY + 16);
+
+    // Mechanics
+    push('COINS',   'COLLECT 15 COINS \u2192 PRESS Y TO CHARGE SABLE',  '#888888', '#fac775', PY + 30);
+    push('TAB KEY', 'SWITCH BETWEEN MAEVEA \u2194 SABLE',                '#888888', '#aa88ff', PY + 52);
+    push('',        'WASD / ARROWS CONTROL WHOEVER IS ACTIVE',           '#888888', '#aa88ff', PY + 68);
+    push('WIN',     'KEY + MAP FRAGMENT + DOOR = ESCAPE',                '#888888', '#fac775', PY + 90);
+
+    // ── Footer hint (non-interactive) ──────────────────────────────────────
+    this.helpElements.push(
+      this.add.text(PX, PY + 120, '\u2014 PRESS H TO OPEN AND CLOSE THIS \u2014', {
+        fontFamily: '"Press Start 2P"', fontSize: '8px', color: '#d4c4e8',
+        resolution: 2
+      }).setOrigin(0.5).setAlpha(0.7).setScrollFactor(0).setDepth(D)
+    );
+
+  }
+
+  closeHelpPanel() {
+    this.helpPanelOpen = false;
+    this.helpElements.forEach(e => e.destroy());
+    this.helpElements = [];
+  }
+
   updateHudStars() {
     this.hudStars.forEach(s => s.destroy());
     this.hudStars = [];
     if (this.starGlowTween) { this.starGlowTween.stop(); this.starGlowTween = null; }
 
     for (let i = 0; i < 3; i++) {
-      const star = this.add.image(48 + i * 20, 96, 'star')
-        .setScale(0.4).setScrollFactor(0).setDepth(20);
-      if (i >= this.companionStars) star.setAlpha(0.3);
+      const star = this.add.image(50 + i * 20, 96, 'star')
+        .setScale(0.35).setScrollFactor(0).setDepth(20);
+      if (i < this.companionStars) {
+        star.setTint(0xf5d47a);   // gold tint — earned
+      } else {
+        star.setAlpha(0.25);      // dim — unearned
+      }
       this.hudStars.push(star);
     }
 
     if (this.companionStars === 3) {
       this.starGlowTween = this.tweens.add({
         targets: this.hudStars,
-        scaleX: 0.44, scaleY: 0.44,
+        scaleX: 0.40, scaleY: 0.40,
         duration: 800,
         yoyo: true,
         repeat: -1,
@@ -1798,52 +1975,108 @@ export default class GameScene extends Phaser.Scene {
     this.time.delayedCall(1000, () => {
       flash.destroy();
 
-      const overlay = this.add.rectangle(640, 360, 1280, 720, 0x0a1a0a)
-        .setScrollFactor(0).setDepth(48).setAlpha(0);
-      this.tweens.add({ targets: overlay, alpha: 1, duration: 400 });
+      // ── Gradient sky background ──
+      const winBg = this.add.graphics().setScrollFactor(0).setDepth(48);
+      winBg.setAlpha(0);
+      winBg.fillGradientStyle(0xc8a4d4, 0xc8a4d4, 0xe8b4c0, 0xe8b4c0, 1);
+      winBg.fillRect(0, 0, 1280, 360);
+      winBg.fillGradientStyle(0xf5c9a0, 0xf5c9a0, 0xd4875a, 0xd4875a, 1);
+      winBg.fillRect(0, 360, 1280, 360);
+      this.tweens.add({ targets: winBg, alpha: 1, duration: 400 });
+
+      // ── Star scatter — top of screen ──
+      const winStarGfx = this.add.graphics().setScrollFactor(0).setDepth(49);
+      winStarGfx.fillStyle(0xffecd8, 1);
+      for (let i = 0; i < 8; i++) {
+        winStarGfx.fillCircle(
+          Math.floor(Math.random() * 1260) + 10,
+          Math.floor(Math.random() * 100) + 5,
+          2
+        );
+      }
+      winStarGfx.setAlpha(0.5);
+      this.tweens.add({
+        targets: winStarGfx, alpha: 0.1,
+        duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.InOut'
+      });
 
       this.time.delayedCall(400, () => {
-        const winText = this.add.text(640, 200, 'YOU ESCAPED!', {
+        // ── "YOU ESCAPED!" ──
+        const winText = this.add.text(640, 160, 'YOU ESCAPED!', {
           fontFamily: '"Press Start 2P"',
           fontSize: '48px',
-          color: '#ffd700',
-          stroke: '#000000',
-          strokeThickness: 6
+          color: '#f5d47a',
+          stroke: '#8040c0',
+          strokeThickness: 4
         }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlpha(0);
 
-        const charHead = this.add.image(570, 300, 'char_head')
-          .setScale(1.5).setScrollFactor(0).setDepth(50).setAlpha(0);
-        const compHead = this.add.image(710, 300, 'hud_player_purple')
-          .setScale(1.5).setScrollFactor(0).setDepth(50).setAlpha(0);
+        this.tweens.add({ targets: winText, alpha: 1, duration: 600, onComplete: () => {
+          this.tweens.add({
+            targets: winText, alpha: 0.7, duration: 1200,
+            yoyo: true, repeat: -1, ease: 'Sine.InOut'
+          });
+        }});
 
-        const nameText = this.add.text(640, 380, 'Maevea and Sable made it out.', {
+        // ── Character icons ──
+        const charHead = this.add.image(580, 280, 'char_head')
+          .setScale(2.0).setScrollFactor(0).setDepth(50).setAlpha(0);
+        const compHead = this.add.image(700, 280, 'hud_player_purple')
+          .setScale(2.0).setScrollFactor(0).setDepth(50).setAlpha(0);
+
+        this.tweens.add({ targets: [charHead, compHead], alpha: 1, duration: 600 });
+        this.time.delayedCall(600, () => {
+          this.tweens.add({
+            targets: charHead, y: 268,
+            duration: 800, yoyo: true, repeat: -1, ease: 'Sine.InOut'
+          });
+          this.tweens.add({
+            targets: compHead, y: 268,
+            duration: 800, delay: 200, yoyo: true, repeat: -1, ease: 'Sine.InOut'
+          });
+        });
+
+        // ── Narrative text — two lines ──
+        const line1 = this.add.text(640, 370, 'Maevea and Sable made it out.', {
           fontFamily: '"Press Start 2P"',
-          fontSize: '10px',
-          color: '#ffffff',
+          fontSize: '9px',
+          color: '#ffecd8',
           stroke: '#000000',
           strokeThickness: 2
         }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlpha(0);
 
-        const playAgainBtn = this.add.text(640, 460, '[ PLAY AGAIN ]', {
+        const line2 = this.add.text(640, 395, 'The Atlas awaits...', {
           fontFamily: '"Press Start 2P"',
-          fontSize: '14px',
-          color: '#ffd700',
+          fontSize: '9px',
+          color: '#ffecd8',
           stroke: '#000000',
-          strokeThickness: 3,
-          backgroundColor: '#332200',
-          padding: { x: 12, y: 8 }
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlpha(0)
-          .setInteractive({ useHandCursor: true });
+          strokeThickness: 2
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlpha(0);
 
         this.tweens.add({
-          targets: [winText, charHead, compHead, nameText, playAgainBtn],
-          alpha: 1,
-          duration: 600
+          targets: [line1, line2], alpha: 1,
+          duration: 800, delay: 600
         });
 
+        // ── Play Again button with background rect ──
+        const btnBg = this.add.graphics().setScrollFactor(0).setDepth(50);
+        btnBg.fillStyle(0x8040c0, 0.8);
+        btnBg.fillRoundedRect(530, 462, 220, 36, 8);
+        btnBg.setAlpha(0);
+
+        const playAgainBtn = this.add.text(640, 480, '[ PLAY AGAIN ]', {
+          fontFamily: '"Press Start 2P"',
+          fontSize: '14px',
+          color: '#fac775',
+          stroke: '#000000',
+          strokeThickness: 3
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setAlpha(0)
+          .setInteractive({ useHandCursor: true });
+
+        this.tweens.add({ targets: [btnBg, playAgainBtn], alpha: 1, duration: 600 });
+
         playAgainBtn.on('pointerdown', () => { this.scene.restart(); });
-        playAgainBtn.on('pointerover',  () => playAgainBtn.setColor('#ffffff'));
-        playAgainBtn.on('pointerout',   () => playAgainBtn.setColor('#ffd700'));
+        playAgainBtn.on('pointerover',  () => playAgainBtn.setTint(0xffffff));
+        playAgainBtn.on('pointerout',   () => playAgainBtn.clearTint());
 
         this.input.keyboard.once('keydown-SPACE', () => { this.scene.restart(); });
       });
