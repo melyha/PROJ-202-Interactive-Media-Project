@@ -281,13 +281,6 @@
   ],
   "backgrounds": [
     {
-      "key": "background_clouds",
-      "path": "assets/backgrounds/background_clouds.png",
-      "width": 256,
-      "height": 256,
-      "category": "background"
-    },
-    {
       "key": "background_color_desert",
       "path": "assets/backgrounds/background_color_desert.png",
       "width": 256,
@@ -295,23 +288,8 @@
       "category": "background"
     },
     {
-      "key": "background_color_hills",
-      "path": "assets/backgrounds/background_color_hills.png",
-      "width": 256,
-      "height": 256,
-      "category": "background",
-      "notes": "Currently used in index.html"
-    },
-    {
       "key": "background_color_mushrooms",
       "path": "assets/backgrounds/background_color_mushrooms.png",
-      "width": 256,
-      "height": 256,
-      "category": "background"
-    },
-    {
-      "key": "background_color_trees",
-      "path": "assets/backgrounds/background_color_trees.png",
       "width": 256,
       "height": 256,
       "category": "background"
@@ -325,24 +303,8 @@
       "notes": "Fade-to-transparent bottom edge"
     },
     {
-      "key": "background_fade_hills",
-      "path": "assets/backgrounds/background_fade_hills.png",
-      "width": 256,
-      "height": 256,
-      "category": "background",
-      "notes": "Fade-to-transparent bottom edge"
-    },
-    {
       "key": "background_fade_mushrooms",
       "path": "assets/backgrounds/background_fade_mushrooms.png",
-      "width": 256,
-      "height": 256,
-      "category": "background",
-      "notes": "Fade-to-transparent bottom edge"
-    },
-    {
-      "key": "background_fade_trees",
-      "path": "assets/backgrounds/background_fade_trees.png",
       "width": 256,
       "height": 256,
       "category": "background",
@@ -365,14 +327,6 @@
       "notes": "Solid fill tile — repeatable for parallax layers"
     },
     {
-      "key": "background_solid_grass",
-      "path": "assets/backgrounds/background_solid_grass.png",
-      "width": 256,
-      "height": 256,
-      "category": "background",
-      "notes": "Solid fill tile — repeatable for parallax layers"
-    },
-    {
       "key": "background_solid_sand",
       "path": "assets/backgrounds/background_solid_sand.png",
       "width": 256,
@@ -380,14 +334,40 @@
       "category": "background",
       "notes": "Solid fill tile — repeatable for parallax layers"
     },
-    {
-      "key": "background_solid_sky",
-      "path": "assets/backgrounds/background_solid_sky.png",
-      "width": 256,
-      "height": 256,
-      "category": "background",
-      "notes": "Solid fill tile — repeatable for parallax layers"
-    }
+    { "key": "elem_cloud_layer2",   "path": "assets/backgrounds/Elements/cloudLayer2.png",   "width": 1024, "height": 400, "category": "background", "notes": "Elements/ parallax cloud strip" },
+    { "key": "elem_cloud_layer_b1", "path": "assets/backgrounds/Elements/cloudLayerB1.png",  "width": 1024, "height": 400, "category": "background", "notes": "Elements/ parallax cloud strip variant B" },
+    { "key": "elem_cloud_layer_b2", "path": "assets/backgrounds/Elements/cloudLayerB2.png",  "width": 1024, "height": 400, "category": "background", "notes": "Elements/ parallax cloud strip variant B" },
+    { "key": "elem_ground_layer2",  "path": "assets/backgrounds/Elements/groundLayer2.png",  "width": 1024, "height": 200, "category": "background", "notes": "Elements/ parallax ground strip" },
+    { "key": "elem_hills",          "path": "assets/backgrounds/Elements/hills.png",          "width": 1024, "height": 400, "category": "background", "notes": "Elements/ rolling hills strip" },
+    { "key": "elem_hills_large",    "path": "assets/backgrounds/Elements/hillsLarge.png",     "width": 1024, "height": 400, "category": "background", "notes": "Elements/ large hills strip" },
+    { "key": "elem_mountain_a",     "path": "assets/backgrounds/Elements/mountainA.png",      "width": 356,  "height": 352, "category": "background", "notes": "Elements/ single mountain sprite" },
+    { "key": "elem_mountain_b",     "path": "assets/backgrounds/Elements/mountainB.png",      "width": 340,  "height": 278, "category": "background", "notes": "Elements/ single mountain sprite" },
+    { "key": "elem_mountain_c",     "path": "assets/backgrounds/Elements/mountainC.png",      "width": 306,  "height": 444, "category": "background", "notes": "Elements/ single mountain sprite" },
+    { "key": "bg_color_forest",     "path": "assets/backgrounds/backgroundColorForest.png",   "width": 1024, "height": 1024, "category": "background", "notes": "Full-scene illustration — forest" },
+    { "key": "bg_color_fall",       "path": "assets/backgrounds/backgroundColorFall.png",     "width": 1024, "height": 1024, "category": "background", "notes": "Full-scene illustration — autumn" },
+    { "key": "bg_color_desert",     "path": "assets/backgrounds/backgroundColorDesert.png",   "width": 1024, "height": 1024, "category": "background", "notes": "Full-scene illustration — desert" },
+    { "key": "bg_empty",            "path": "assets/backgrounds/backgroundEmpty.png",          "width": 1024, "height": 1024, "category": "background", "notes": "Full-scene illustration — empty sky" },
+    { "key": "bg_castles",          "path": "assets/backgrounds/backgroundCastles.png",        "width": 1024, "height": 1024, "category": "background", "notes": "Full-scene illustration — castles" },
+    { "key": "png_cloud1",    "path": "assets/backgrounds/PNG/Default/cloud1.png",    "width": 203, "height": 121, "category": "background", "notes": "PNG/Default/ individual cloud element" },
+    { "key": "png_cloud2",    "path": "assets/backgrounds/PNG/Default/cloud2.png",    "width": 196, "height": 156, "category": "background", "notes": "PNG/Default/ individual cloud element" },
+    { "key": "png_cloud3",    "path": "assets/backgrounds/PNG/Default/cloud3.png",    "width": 216, "height": 139, "category": "background", "notes": "PNG/Default/ individual cloud element" },
+    { "key": "png_cloud4",    "path": "assets/backgrounds/PNG/Default/cloud4.png",    "width": 250, "height": 146, "category": "background", "notes": "PNG/Default/ individual cloud element" },
+    { "key": "png_cloud5",    "path": "assets/backgrounds/PNG/Default/cloud5.png",    "width": 203, "height": 121, "category": "background", "notes": "PNG/Default/ individual cloud element" },
+    { "key": "png_cloud6",    "path": "assets/backgrounds/PNG/Default/cloud6.png",    "width": 196, "height": 156, "category": "background", "notes": "PNG/Default/ individual cloud element" },
+    { "key": "png_cloud7",    "path": "assets/backgrounds/PNG/Default/cloud7.png",    "width": 216, "height": 139, "category": "background", "notes": "PNG/Default/ individual cloud element" },
+    { "key": "png_cloud8",    "path": "assets/backgrounds/PNG/Default/cloud8.png",    "width": 250, "height": 146, "category": "background", "notes": "PNG/Default/ individual cloud element" },
+    { "key": "png_tree",      "path": "assets/backgrounds/PNG/Default/tree.png",      "width": 94,  "height": 204, "category": "background", "notes": "PNG/Default/ individual tree element" },
+    { "key": "png_tree_long", "path": "assets/backgrounds/PNG/Default/treeLong.png",  "width": 82,  "height": 249, "category": "background", "notes": "PNG/Default/ individual tall tree element" },
+    { "key": "png_moon",      "path": "assets/backgrounds/PNG/Default/moon.png",      "width": 78,  "height": 80,  "category": "background", "notes": "PNG/Default/ moon element" },
+    { "key": "png_bush1",     "path": "assets/backgrounds/PNG/Default/bush1.png",     "width": 120, "height": 60,  "category": "background", "notes": "PNG/Default/ bush element" },
+    { "key": "png_bush2",     "path": "assets/backgrounds/PNG/Default/bush2.png",     "width": 53,  "height": 44,  "category": "background", "notes": "PNG/Default/ bush element" },
+    { "key": "bg_1_clouds",      "path": "assets/backgrounds/1-background_clouds 1.png",      "width": 256, "height": 256, "category": "background", "notes": "Numbered parallax layer 1 — clouds" },
+    { "key": "bg_2_solid_sky",   "path": "assets/backgrounds/2-background_solid_sky 1.png",   "width": 256, "height": 256, "category": "background", "notes": "Numbered parallax layer 2 — solid sky" },
+    { "key": "bg_3_fade_trees",  "path": "assets/backgrounds/3-background_fade_trees 1.png",  "width": 256, "height": 256, "category": "background", "notes": "Numbered parallax layer 3 — fade trees" },
+    { "key": "bg_4_color_trees", "path": "assets/backgrounds/4-background_color_trees 1.png", "width": 256, "height": 256, "category": "background", "notes": "Numbered parallax layer 4 — color trees" },
+    { "key": "bg_5_solid_grass", "path": "assets/backgrounds/5-background_solid_grass 1.png", "width": 256, "height": 256, "category": "background", "notes": "Numbered parallax layer 5 — solid grass" },
+    { "key": "bg_3b_fade_hills",  "path": "assets/backgrounds/3b-background_fade_hills 1.png",  "type": "image" },
+    { "key": "bg_4b_color_hills", "path": "assets/backgrounds/4b-background_color_hills 1.png", "type": "image" }
   ],
   "character": [
     {
