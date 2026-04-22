@@ -23,6 +23,7 @@ export default class GameScene extends Phaser.Scene {
     this.attackZone = null;
     this.attackState = "ready";
     this.attackIsKick = false;
+    this.attackLock = false;
     this.keyJ = null;
     this.keyK = null;
 
@@ -1223,6 +1224,7 @@ export default class GameScene extends Phaser.Scene {
     this.bgLayers = [];
     this.attackState = "ready";
     this.attackIsKick = false;
+    this.attackLock = false;
     this.coyoteTimer = 0;
     this.hudHeartBlink = null;
     this.vignetteGfx = null;
@@ -1486,6 +1488,7 @@ export default class GameScene extends Phaser.Scene {
       if (animObj.key === "attack" || animObj.key === "kick") {
         this.attackZone.body.enable = false;
         this.attackState = "cooldown";
+        this.attackLock = false;
         this.time.delayedCall(200, () => {
           this.attackState = "ready";
         });
@@ -1771,7 +1774,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // ── Companion mode toggle (TAB) ───────────────────────────────────────
-    if (this.companionReady && Phaser.Input.Keyboard.JustDown(this.tabKey)) {
+    if (this.companionReady && !this.attackLock && Phaser.Input.Keyboard.JustDown(this.tabKey)) {
       this.companionControlMode = !this.companionControlMode;
 
       if (this.companionControlMode) {
@@ -2054,14 +2057,16 @@ export default class GameScene extends Phaser.Scene {
         this.player.body.setAllowGravity(true);
       }
 
-      // Attack triggers
-      if (this.attackState === "ready") {
+      // Attack triggers — attackLock prevents Z+X simultaneous conflict
+      if (this.attackState === "ready" && !this.attackLock) {
         if (Phaser.Input.Keyboard.JustDown(this.keyJ)) {
+          this.attackLock = true;
           this.attackState = "active";
           this.attackIsKick = false;
           this.player.anims.play("attack", true);
           this.attackZone.body.enable = true;
         } else if (Phaser.Input.Keyboard.JustDown(this.keyK)) {
+          // X checks the lock but does not set it — Z owns the lock
           this.attackState = "active";
           this.attackIsKick = true;
           this.player.anims.play("kick", true);
@@ -2124,6 +2129,20 @@ export default class GameScene extends Phaser.Scene {
       this.physics.world.drawDebug = !this.physics.world.drawDebug;
       if (!this.physics.world.drawDebug) {
         this.physics.world.debugGraphic.clear();
+      }
+    }
+
+    // Safety: if attackState stuck active but no attack animation is running, reset
+    if (this.attackState === "active") {
+      const currentAnim = this.player.anims.currentAnim;
+      const isAttackAnim =
+        currentAnim &&
+        (currentAnim.key === "attack" || currentAnim.key === "kick");
+      if (!isAttackAnim) {
+        this.attackState = "ready";
+        this.attackLock = false;
+        this.attackZone.body.enable = false;
+        this.player.anims.play("idle", true);
       }
     }
 
