@@ -6,6 +6,8 @@
   <title>Enigma</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols:wght@900&display=swap" rel="stylesheet">
+
   <style>
     * {
       margin: 0;
@@ -30,9 +32,9 @@
   <script>
 
     // ── CONSTANTS ─────────────────────────────────────────
-    const MOVE_SPEED      = 250;
-    const JUMP_VEL        = -600;
-    const COYOTE_MS       = 150;   // grace window after leaving a platform edge
+    const MOVE_SPEED = 250;
+    const JUMP_VEL = -600;
+    const COYOTE_MS = 150;   // grace window after leaving a platform edge
     const COINS_TO_CONVERT = 15;   // coins required for one companion energy star
 
     // ── VARIABLES ─────────────────────────────────────────
@@ -50,21 +52,21 @@
 
     // ── Attack system ──────────────────────────────────────
     let attackZone;
-    let attackState  = 'ready';   // 'ready' | 'active' | 'cooldown'
+    let attackState = 'ready';   // 'ready' | 'active' | 'cooldown'
     let attackIsKick = false;
     let keyJ, keyK;
     let scene;
 
     // ── Game state ─────────────────────────────────────────
-    let playerLives   = 3;
-    let coinCount     = 0;
-    let gemCount      = 0;
+    let playerLives = 3;
+    let coinCount = 0;
+    let gemCount = 0;
     let keysCollected = 0;
-    let totalKeys     = 0;
+    let totalKeys = 0;
     let levelComplete = false;
-    let isInvincible  = false;
-    let isOnLadder    = false;
-    let doorCooldown  = false;
+    let isInvincible = false;
+    let isOnLadder = false;
+    let doorCooldown = false;
 
     // ── Tile groups ─────────────────────────────────────────
     let blockGroup;
@@ -74,57 +76,57 @@
     let collectiblesGroup;
 
     // ── HUD references ──────────────────────────────────────
-    let hudHearts          = [];    // [img0, img1, img2] — player heart slots
+    let hudHearts = [];    // [img0, img1, img2] — player heart slots
     let hudCoinsText;
     let hudGemsText;
     let hudKeysText;
-    let hudHeartBlink      = null;  // active blink tween (targets hudHearts[0])
-    let vignetteGfx        = null;  // red edge vignette (last-life warning)
+    let hudHeartBlink = null;  // active blink tween (targets hudHearts[0])
+    let vignetteGfx = null;  // red edge vignette (last-life warning)
     let hudCompanionHearts = [];    // companion heart slots
-    let hudStars           = [];    // companion energy star icons (0–3)
-    let starGlowTween      = null;  // glow tween when all 3 stars filled
+    let hudStars = [];    // companion energy star icons (0–3)
+    let starGlowTween = null;  // glow tween when all 3 stars filled
 
     // ── Death state ──────────────────────────────────────────
     let isDead = false;
 
     // ── Companion ────────────────────────────────────────────
-    let companion           = null;
-    let companionIdleTime   = 0;
-    let companionIsFront    = false;
-    let companionLives      = 3;      // separate from playerLives
-    let hudCompanionIcon    = null;   // reference to companion HUD head icon
-    let companionStars      = 1;      // 1–3 energy stars (always visible; starts at 1)
+    let companion = null;
+    let companionIdleTime = 0;
+    let companionIsFront = false;
+    let companionLives = 3;      // separate from playerLives
+    let hudCompanionIcon = null;   // reference to companion HUD head icon
+    let companionStars = 1;      // 1–3 energy stars (always visible; starts at 1)
     let conversionAvailable = false;  // threshold reached, popup not yet shown
-    let companionReady      = false;  // companion ability charged
-    let companionOperating  = false;  // companion has started active movement after ready
+    let companionReady = false;  // companion ability charged
+    let companionOperating = false;  // companion has started active movement after ready
     let conversionPopupOpen = false;  // popup currently visible (blocks input)
-    let conversionPending   = false;  // conversion banner is showing (allows play)
+    let conversionPending = false;  // conversion banner is showing (allows play)
     let lastConversionThreshold = 0;  // highest threshold offered so far
     let conversionBannerObjs = [];    // elements for the persistent conversion banner
-    let readyBannerObjs      = [];    // elements for the persistent ready banner
+    let readyBannerObjs = [];    // elements for the persistent ready banner
 
     // ── TILE ROUTING ──────────────────────────────────────────
     function getTileCategory(key) {
       if (key.startsWith('flag') || key.startsWith('torch') ||
-          key.startsWith('bush') || key.startsWith('cactus') ||
-          key.startsWith('sign') || key.startsWith('mushroom') ||
-          key.startsWith('rock') || key.startsWith('fence') ||
-          key.startsWith('chain') || key.startsWith('window') ||
-          key.startsWith('hill') || key.startsWith('grass') ||
-          key.startsWith('hud'))
+        key.startsWith('bush') || key.startsWith('cactus') ||
+        key.startsWith('sign') || key.startsWith('mushroom') ||
+        key.startsWith('rock') || key.startsWith('fence') ||
+        key.startsWith('chain') || key.startsWith('window') ||
+        key.startsWith('hill') || key.startsWith('grass') ||
+        key.startsWith('hud'))
         return 'backdrop';
       if (key.startsWith('terrain')) return 'terrain';
-      if (key.startsWith('block'))   return 'block';
-      if (key.startsWith('brick'))   return 'brick';
+      if (key.startsWith('block')) return 'block';
+      if (key.startsWith('brick')) return 'brick';
       if (key.startsWith('lava') || key === 'spikes' ||
-          key === 'saw' || key.startsWith('bomb') ||
-          key.startsWith('water'))   return 'hazard';
-      if (key.startsWith('ladder'))  return 'ladder';
-      if (key.startsWith('door'))    return 'door';
-      if (key.startsWith('coin'))    return 'collectible';
-      if (key.startsWith('gem'))     return 'collectible';
-      if (key.startsWith('key_'))    return 'collectible';
-      if (key.startsWith('lock'))    return 'terrain';
+        key === 'saw' || key.startsWith('bomb') ||
+        key.startsWith('water')) return 'hazard';
+      if (key.startsWith('ladder')) return 'ladder';
+      if (key.startsWith('door')) return 'door';
+      if (key.startsWith('coin')) return 'collectible';
+      if (key.startsWith('gem')) return 'collectible';
+      if (key.startsWith('key_')) return 'collectible';
+      if (key.startsWith('lock')) return 'terrain';
       return 'terrain';
     }
 
@@ -158,7 +160,7 @@
       // 1 → half empty empty  (+ warn)
       // 0 → empty empty empty (death handled by caller)
       const t = ['hud_heart_empty', 'hud_heart_empty', 'hud_heart_empty'];
-      if (playerLives >= 3)      { t[0] = t[1] = t[2] = 'hud_heart'; }
+      if (playerLives >= 3) { t[0] = t[1] = t[2] = 'hud_heart'; }
       else if (playerLives === 2) { t[0] = t[1] = 'hud_heart'; }
       else if (playerLives === 1) { t[0] = 'hud_heart_half'; }
       for (let i = 0; i < 3; i++) {
@@ -173,10 +175,10 @@
         if (!vignetteGfx) {
           vignetteGfx = scene.add.graphics().setScrollFactor(0).setDepth(19);
           vignetteGfx.fillStyle(0xff0000, 0.25);
-          vignetteGfx.fillRect(0,    0,   1280,  60);
-          vignetteGfx.fillRect(0,    660, 1280,  60);
-          vignetteGfx.fillRect(0,    0,   60,   720);
-          vignetteGfx.fillRect(1220, 0,   60,   720);
+          vignetteGfx.fillRect(0, 0, 1280, 60);
+          vignetteGfx.fillRect(0, 660, 1280, 60);
+          vignetteGfx.fillRect(0, 0, 60, 720);
+          vignetteGfx.fillRect(1220, 0, 60, 720);
         }
       } else if (playerLives > 1) {
         clearLastLifeWarning();
@@ -185,7 +187,7 @@
 
     function updateCompanionHearts() {
       const t = ['hud_heart_empty', 'hud_heart_empty', 'hud_heart_empty'];
-      if (companionLives >= 3)      { t[0] = t[1] = t[2] = 'hud_heart'; }
+      if (companionLives >= 3) { t[0] = t[1] = t[2] = 'hud_heart'; }
       else if (companionLives === 2) { t[0] = t[1] = 'hud_heart'; }
       else if (companionLives === 1) { t[0] = 'hud_heart_half'; }
       for (let i = 0; i < 3; i++) {
@@ -194,7 +196,7 @@
       if (companionLives <= 0) {
         // Companion inactive — grey out icon
         if (hudCompanionIcon) { hudCompanionIcon.setTint(0x555555).setAlpha(0.5); }
-        if (companion)        { companion.setTint(0x555555).setAlpha(0.5); }
+        if (companion) { companion.setTint(0x555555).setAlpha(0.5); }
       }
     }
 
@@ -216,7 +218,7 @@
       player.body.moves = false;
 
       const PX = 640, PY = 360;
-      const panel  = scene.add.rectangle(PX, PY, 520, 190, 0x000033, 0.88)
+      const panel = scene.add.rectangle(PX, PY, 520, 190, 0x000033, 0.88)
         .setScrollFactor(0).setDepth(60);
       const border = scene.add.graphics().setScrollFactor(0).setDepth(60);
       border.lineStyle(2, 0xaa88ff, 1);
@@ -270,10 +272,10 @@
       });
 
       // Hover highlights
-      yesBtn.on('pointerover',  () => yesBtn.setColor('#ffffff'));
-      yesBtn.on('pointerout',   () => yesBtn.setColor('#00ff88'));
-      noBtn.on('pointerover',   () => noBtn.setColor('#ffffff'));
-      noBtn.on('pointerout',    () => noBtn.setColor('#ff6666'));
+      yesBtn.on('pointerover', () => yesBtn.setColor('#ffffff'));
+      yesBtn.on('pointerout', () => yesBtn.setColor('#00ff88'));
+      noBtn.on('pointerover', () => noBtn.setColor('#ffffff'));
+      noBtn.on('pointerout', () => noBtn.setColor('#ff6666'));
     }
 
     function showReadyPopup() {
@@ -281,7 +283,7 @@
       player.body.moves = false;
 
       const PX = 640, PY = 360;
-      const panel  = scene.add.rectangle(PX, PY, 420, 160, 0x000033, 0.88)
+      const panel = scene.add.rectangle(PX, PY, 420, 160, 0x000033, 0.88)
         .setScrollFactor(0).setDepth(60);
       const border = scene.add.graphics().setScrollFactor(0).setDepth(60);
       border.lineStyle(2, 0xaa88ff, 1);
@@ -309,7 +311,7 @@
       });
 
       okBtn.on('pointerover', () => okBtn.setColor('#ffffff'));
-      okBtn.on('pointerout',  () => okBtn.setColor('#ffd700'));
+      okBtn.on('pointerout', () => okBtn.setColor('#ffd700'));
     }
 
     function updateHudStars() {
@@ -344,12 +346,12 @@
     function showConversionBanner() {
       conversionPending = true;
       const CW = 1280;
-      const bg  = scene.add.rectangle(CW / 2, 20, CW, 40, 0x1a0a2e, 0.88)
+      const bg = scene.add.rectangle(CW / 2, 20, CW, 40, 0x1a0a2e, 0.88)
         .setScrollFactor(0).setDepth(30);
       const txt = scene.add.text(12, 20,
         '\u2736 Convert coins to companion energy?', {
-          fontFamily: '"Press Start 2P"', fontSize: '7px', color: '#f5c875'
-        }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(30);
+        fontFamily: '"Press Start 2P"', fontSize: '7px', color: '#f5c875'
+      }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(30);
       const yesBtn = scene.add.text(CW - 60, 20, '[ YES ]', {
         fontFamily: '"Press Start 2P"', fontSize: '7px', color: '#44cc88'
       }).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(30)
@@ -358,7 +360,7 @@
       conversionBannerObjs = [bg, txt, yesBtn];
 
       yesBtn.on('pointerover', () => yesBtn.setTint(0xffff99));
-      yesBtn.on('pointerout',  () => yesBtn.clearTint());
+      yesBtn.on('pointerout', () => yesBtn.clearTint());
       yesBtn.on('pointerdown', () => {
         // Destroy banner
         conversionBannerObjs.forEach(e => e.destroy());
@@ -378,12 +380,12 @@
       // Stack below conversion banner if it is still showing
       const bannerY = conversionPending ? 44 : 0;
       const CW = 1280;
-      const bg  = scene.add.rectangle(CW / 2, bannerY + 20, CW, 40, 0x1a0a2e, 0.88)
+      const bg = scene.add.rectangle(CW / 2, bannerY + 20, CW, 40, 0x1a0a2e, 0.88)
         .setScrollFactor(0).setDepth(30);
       const txt = scene.add.text(12, bannerY + 20,
         '\u2736 Companion ready to operate!', {
-          fontFamily: '"Press Start 2P"', fontSize: '7px', color: '#c8aaff'
-        }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(30);
+        fontFamily: '"Press Start 2P"', fontSize: '7px', color: '#c8aaff'
+      }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(30);
 
       readyBannerObjs = [bg, txt];
       // No button — auto-dismissed when companionOperating becomes true (see update())
@@ -510,10 +512,10 @@
       showFloatingText(scene, block.x, block.y - 48, `+${count}`, '#ffd700');
 
       for (let i = 0; i < count; i++) {
-        const delay   = i * 25;                           // stagger each coin 25ms
+        const delay = i * 25;                           // stagger each coin 25ms
         const spreadX = (Math.random() - 0.5) * 140;     // -70..+70 horizontal
-        const upDist  = 90 + Math.random() * 70;         // 90..160px upward
-        const coin    = scene.add.image(block.x, block.y - 32, 'coin_gold')
+        const upDist = 90 + Math.random() * 70;         // 90..160px upward
+        const coin = scene.add.image(block.x, block.y - 32, 'coin_gold')
           .setScale(0.5).setDepth(5).setAlpha(0);
 
         scene.time.delayedCall(delay, () => {
@@ -542,7 +544,7 @@
     }
 
     function onBlockHit(block) {
-      const key   = block.texture.key;
+      const key = block.texture.key;
       const origY = block.y;
 
       // Bounce tween — applies to every block type
@@ -651,11 +653,11 @@
     function preload() {
 
       // ── Background layers — all 256×256px, tiled horizontally ──
-      this.load.image('background_solid_sky',   'assets/backgrounds/background_solid_sky.png');
-      this.load.image('background_clouds',      'assets/backgrounds/background_clouds.png');
-      this.load.image('background_fade_hills',  'assets/backgrounds/background_fade_hills.png');
+      this.load.image('background_solid_sky', 'assets/backgrounds/background_solid_sky.png');
+      this.load.image('background_clouds', 'assets/backgrounds/background_clouds.png');
+      this.load.image('background_fade_hills', 'assets/backgrounds/background_fade_hills.png');
       this.load.image('background_color_hills', 'assets/backgrounds/background_color_hills.png');
-      this.load.image('background_fade_trees',  'assets/backgrounds/background_fade_trees.png');
+      this.load.image('background_fade_trees', 'assets/backgrounds/background_fade_trees.png');
       this.load.image('background_color_trees', 'assets/backgrounds/background_color_trees.png');
       this.load.image('background_solid_grass', 'assets/backgrounds/background_solid_grass.png');
 
@@ -987,7 +989,7 @@
       this.load.image('window', 'assets/sprites/tiles/window.png');
 
       // ── Companion sprites — 128×128px each ──────────────────
-      this.load.image('character_purple_idle',  'assets/sprites/companion/character_purple_idle.png');
+      this.load.image('character_purple_idle', 'assets/sprites/companion/character_purple_idle.png');
       this.load.image('character_purple_front', 'assets/sprites/companion/character_purple_front.png');
 
       // ── Character head — from PNG/Parts/, used for HUD icon ──
@@ -999,44 +1001,44 @@
       scene = this;
 
       // ── Reset all game state — supports scene.scene.restart() ──
-      playerLives   = 3;
-      coinCount     = 0;
-      gemCount      = 0;
+      playerLives = 3;
+      coinCount = 0;
+      gemCount = 0;
       keysCollected = 0;
-      totalKeys     = 0;
+      totalKeys = 0;
       levelComplete = false;
-      isInvincible  = false;
-      isOnLadder    = false;
-      doorCooldown  = false;
-      isDead        = false;
-      bgLayers      = [];
-      attackState   = 'ready';
-      attackIsKick  = false;
-      coyoteTimer   = 0;
-      hudHeartBlink      = null;
-      vignetteGfx        = null;
-      hudHearts          = [];
+      isInvincible = false;
+      isOnLadder = false;
+      doorCooldown = false;
+      isDead = false;
+      bgLayers = [];
+      attackState = 'ready';
+      attackIsKick = false;
+      coyoteTimer = 0;
+      hudHeartBlink = null;
+      vignetteGfx = null;
+      hudHearts = [];
       hudCompanionHearts = [];
-      companion               = null;
-      companionIdleTime       = 0;
-      companionIsFront        = false;
-      companionLives          = 3;
-      hudCompanionIcon        = null;
-      companionStars          = 1;
-      conversionAvailable     = false;
-      companionReady          = false;
-      companionOperating      = false;
-      conversionPopupOpen     = false;
-      conversionPending       = false;
+      companion = null;
+      companionIdleTime = 0;
+      companionIsFront = false;
+      companionLives = 3;
+      hudCompanionIcon = null;
+      companionStars = 1;
+      conversionAvailable = false;
+      companionReady = false;
+      companionOperating = false;
+      conversionPopupOpen = false;
+      conversionPending = false;
       lastConversionThreshold = 0;
-      hudStars                = [];
-      starGlowTween           = null;
-      conversionBannerObjs    = [];
-      readyBannerObjs         = [];
+      hudStars = [];
+      starGlowTween = null;
+      conversionBannerObjs = [];
+      readyBannerObjs = [];
 
       // ── Level dimensions from editor JSON ─────────────────
       const levelData = this.cache.json.get('level1');
-      const T      = levelData.tileSize;    // 64
+      const T = levelData.tileSize;    // 64
       const worldW = levelData.cols * T;    // 3200  (50 cols × 64)
       const worldH = levelData.rows * T;    // 896   (14 rows × 64)
 
@@ -1068,16 +1070,16 @@
       };
 
       // 1. Sky — fixed, fills entire canvas (scrollFactor 0 = screen-space position)
-      addBg('background_solid_sky',   0,    640,  360, BG_W, 720);
+      addBg('background_solid_sky', 0, 640, 360, BG_W, 720);
 
       // 2. Clouds — very slow drift, upper ~60% of screen
       //    worldY=200: screenY = 200 − 180×0.05 = 191; covers −25..407
-       addBg('background_clouds',      0.05, 1600, 300, BG_W, 600);
-      
+      addBg('background_clouds', 0.05, 1600, 300, BG_W, 600);
+
 
       // 3. Fade hills — mid distance (fade-to-transparent bottom blends with next layer)
       //    worldY=498: screenY = 498 − 180×0.1 = 480; covers 280..680
-      addBg('background_fade_hills',  0.1,  1600, 530, BG_W, 600);
+      addBg('background_fade_hills', 0.1, 1600, 530, BG_W, 600);
 
       // 4. Color hills — slightly closer
       //    worldY=527: screenY = 527 − 180×0.15 = 500; covers 300..700
@@ -1085,7 +1087,7 @@
 
       // 5. Fade trees — near distance
       //    worldY=585: screenY = 585 − 180×0.25 = 540; covers 340..740
-      addBg('background_fade_trees',  0.25, 1600, 585, BG_W, 400);
+      addBg('background_fade_trees', 0.25, 1600, 585, BG_W, 400);
 
       // 6. Color trees — closest background layer
       //    worldY=623: screenY = 623 − 180×0.35 = 560; covers 360..760
@@ -1093,15 +1095,15 @@
 
       // 7. Grass strip — ground level, flush to screen bottom at scrollY=180
       //    worldY=746: screenY = 746 − 180×0.5 = 656; covers 592..720 ✓
-      addBg('background_solid_grass', 0.5,  1600, 746, BG_W, 150);
+      addBg('background_solid_grass', 0.5, 1600, 746, BG_W, 150);
 
       // ── Static groups ──────────────────────────────────────
-      groundLayer       = this.physics.add.staticGroup();
-      platformsGroup    = this.physics.add.staticGroup();
-      blockGroup        = this.physics.add.staticGroup();
-      hazardGroup       = this.physics.add.staticGroup();
-      ladderGroup       = this.physics.add.staticGroup();
-      doorGroup         = this.physics.add.staticGroup();
+      groundLayer = this.physics.add.staticGroup();
+      platformsGroup = this.physics.add.staticGroup();
+      blockGroup = this.physics.add.staticGroup();
+      hazardGroup = this.physics.add.staticGroup();
+      ladderGroup = this.physics.add.staticGroup();
+      doorGroup = this.physics.add.staticGroup();
       collectiblesGroup = this.physics.add.staticGroup();
 
       // ── Count total key tiles for HUD denominator ────────────
@@ -1202,16 +1204,16 @@
       // ── Animations — frame indices from assets.json spritesheets[0].animGroups ──
       const anim = (key, frames, frameRate, repeat) =>
         this.anims.create({ key, frames: this.anims.generateFrameNumbers('player', { frames }), frameRate, repeat });
-      anim('idle',   [0],                         6, -1);
-      anim('jump',   [1],                         6,  0);
-      anim('fall',   [2],                         6, -1);
-      anim('run',    [24, 25, 26],               12, -1);
-      anim('walk',   [36,37,38,39,40,41,42,43], 10, -1);
-      anim('attack', [27, 28, 29],               10,  0);
-      anim('kick',   [19],                       10,  0);
-      anim('hurt',   [33],                        6,  0);
-      anim('climb',    [5, 6],  8, -1);
-      anim('fallDown', [44],    6,  0);   // death pose — frame 44
+      anim('idle', [0], 6, -1);
+      anim('jump', [1], 6, 0);
+      anim('fall', [2], 6, -1);
+      anim('run', [24, 25, 26], 12, -1);
+      anim('walk', [36, 37, 38, 39, 40, 41, 42, 43], 10, -1);
+      anim('attack', [27, 28, 29], 10, 0);
+      anim('kick', [19], 10, 0);
+      anim('hurt', [33], 6, 0);
+      anim('climb', [5, 6], 8, -1);
+      anim('fallDown', [44], 6, 0);   // death pose — frame 44
 
 
       // ── Attack zone (invisible dynamic trigger) ───────────
@@ -1457,7 +1459,7 @@
       }
 
       // ── Horizontal movement ──────────────────────────────
-      const goLeft  = cursors.left.isDown  || wasd.left.isDown;
+      const goLeft = cursors.left.isDown || wasd.left.isDown;
       const goRight = cursors.right.isDown || wasd.right.isDown;
 
       if (goLeft) {
@@ -1472,7 +1474,7 @@
 
       // ── Jump ─────────────────────────────────────────────
       const jumpPressed =
-        Phaser.Input.Keyboard.JustDown(cursors.up)    ||
+        Phaser.Input.Keyboard.JustDown(cursors.up) ||
         Phaser.Input.Keyboard.JustDown(cursors.space) ||
         Phaser.Input.Keyboard.JustDown(wasd.up);
 
@@ -1511,11 +1513,11 @@
 
       // Derive display state string
       let stateStr;
-      if (attackState === 'active')        stateStr = attackIsKick ? 'kick' : 'attack';
+      if (attackState === 'active') stateStr = attackIsKick ? 'kick' : 'attack';
       else if (attackState === 'cooldown') stateStr = 'cooldown';
-      else if (isOnLadder)                 stateStr = 'ladder';
+      else if (isOnLadder) stateStr = 'ladder';
       else stateStr = !onGround ? (player.body.velocity.y < 0 ? 'jump' : 'fall')
-                    : player.body.velocity.x !== 0 ? 'run' : 'idle';
+        : player.body.velocity.x !== 0 ? 'run' : 'idle';
 
       debugText.setText(
         `state:    ${stateStr}\n` +
