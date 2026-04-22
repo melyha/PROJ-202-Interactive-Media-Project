@@ -53,6 +53,7 @@ export default class GameScene extends Phaser.Scene {
     this.starGlowTween = null;
 
     this.isDead = false;
+    this.pendingLockTile = null;
 
     this.companion = null;
     this.companionIdleTime = 0;
@@ -67,7 +68,6 @@ export default class GameScene extends Phaser.Scene {
     this.conversionPending = false;
     this.lastConversionThreshold = 0;
     this.conversionBannerObjs = [];
-    this.readyBannerObjs = [];
 
     this.enemies = [];
 
@@ -90,6 +90,11 @@ export default class GameScene extends Phaser.Scene {
     this.sableTipShown = false;
     this.helpPanelOpen = false;
     this.helpElements = [];
+    this.notifCircleGfx = null;
+    this.notifPanelOpen = false;
+    this.notifPanelElements = [];
+    this.notifHasContent = false;
+    this.notifQueue = [];
   }
 
   // ── PRELOAD ───────────────────────────────────────────────────────────────
@@ -1198,6 +1203,7 @@ export default class GameScene extends Phaser.Scene {
 
     // ── Map fragment image — placeholder used if file not present ──────────
     this.load.image("map_fragment_1", "assets/images/map_fragment_1.png");
+    this.load.image("title_bg", "assets/backgrounds/title-background.png");
   }
 
   // ── CREATE ─────────────────────────────────────────────────────────────────
@@ -1213,6 +1219,7 @@ export default class GameScene extends Phaser.Scene {
     this.isOnLadder = false;
     this.doorCooldown = false;
     this.isDead = false;
+    this.pendingLockTile = null;
     this.bgLayers = [];
     this.attackState = "ready";
     this.attackIsKick = false;
@@ -1236,7 +1243,6 @@ export default class GameScene extends Phaser.Scene {
     this.hudStars = [];
     this.starGlowTween = null;
     this.conversionBannerObjs = [];
-    this.readyBannerObjs = [];
     this.enemies = [];
     this.companionControlMode = false;
     this.modeIndicator = null;
@@ -1620,8 +1626,9 @@ export default class GameScene extends Phaser.Scene {
     helpCircle.strokeCircle(1248, 29, 18);
     this.add
       .text(1248, 29, "?", {
-        fontFamily: '"Press Start 2P"',
-        fontSize: "14px",
+        fontFamily: '"Noto Sans Symbols"',
+        fontStyle: "bold",
+        fontSize: "18px",
         color: "#ffffff",
         resolution: 2,
       })
@@ -1651,7 +1658,53 @@ export default class GameScene extends Phaser.Scene {
       if (this.helpPanelOpen) this.closeHelpPanel();
     });
 
+    // ── Notification button (! circle, top-right) ────────────────────────────
+    const notifShadow = this.add.graphics().setScrollFactor(0).setDepth(50);
+    notifShadow.fillStyle(0xaa5500, 1);
+    notifShadow.fillCircle(1210, 32, 18);
+  
+
+    this.notifCircleGfx = this.add.graphics().setScrollFactor(0).setDepth(51);
+    this.notifCircleGfx.fillStyle(0x888888, 1); // grey = no notification
+    this.notifCircleGfx.fillCircle(1210, 29, 18);
+   
+
+    const notifHighlight = this.add.graphics().setScrollFactor(0).setDepth(52);
+    notifHighlight.fillStyle(0xaaaaaa, 0.5);
+    notifHighlight.fillCircle(1205, 24, 9);
+
+
+    this.notifText = this.add
+      .text(1210, 29, "!", {
+        fontFamily: '"Noto Sans Symbols"',
+        fontStyle: "bold",
+        fontSize: "18px",
+        color: "#ffffff",
+        stroke: "#000000",
+        strokeThickness: 2,
+        resolution: 2,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(53);
+
+    const notifHitArea = this.add
+      .rectangle(1210, 29, 36, 36)
+      .setScrollFactor(0)
+      .setDepth(54)
+      .setInteractive({ useHandCursor: true })
+      .setAlpha(0.001);
+
+    notifHitArea.on("pointerdown", () => this.toggleNotifPanel());
+
+    // I key — toggle notification panel
+    this.input.keyboard.on("keydown-I", () => {
+      this.toggleNotifPanel();
+    });
+
     // ── Debug overlay ────────────────────────────────────────────────────────
+    this.debugVisible = false;
+    this.physics.world.drawDebug = false;
     this.debugText = this.add
       .text(1270, 10, "", {
         fontFamily: "monospace",
@@ -1663,7 +1716,20 @@ export default class GameScene extends Phaser.Scene {
       })
       .setScrollFactor(0)
       .setOrigin(1, 0)
-      .setDepth(100);
+      .setDepth(100)
+      .setVisible(false);
+
+    // F1 — toggle debug overlay
+    this.input.keyboard.on('keydown-BACKTICK', () => {
+      this.debugVisible = !this.debugVisible;
+      this.debugText.setVisible(this.debugVisible);
+      if (!this.debugVisible) {
+        this.physics.world.drawDebug = false;
+        if (this.physics.world.debugGraphic) {
+          this.physics.world.debugGraphic.clear();
+        }
+      }
+    });
   }
 
   // ── UPDATE ─────────────────────────────────────────────────────────────────
@@ -1714,11 +1780,12 @@ export default class GameScene extends Phaser.Scene {
         this.player.body.moves = false;
         this.player.anims.play("idle", true);
         this.cameras.main.startFollow(this.companion, true, 0.1, 0.1);
-        // Dismiss ready banner on first TAB press
-        if (this.readyBannerObjs && this.readyBannerObjs.length > 0) {
-          this.readyBannerObjs.forEach((e) => e.destroy());
-          this.readyBannerObjs = [];
-        }
+        // Clear entire notification queue and force-close panel
+        this.notifPanelElements.forEach((e) => e.destroy());
+        this.notifPanelElements = [];
+        this.notifPanelOpen = false;
+        this.notifQueue = [];
+        this.setNotifActive(false);
         this.showModeIndicator("SABLE");
         // One-time tooltip on first TAB to companion
         if (!this.sableTipShown) {
@@ -1728,6 +1795,7 @@ export default class GameScene extends Phaser.Scene {
             this.companion.y - 60,
             "WASD or ARROWS to move Sable!",
             "#aa88ff",
+            4000,
           );
         }
       } else {
@@ -1877,7 +1945,6 @@ export default class GameScene extends Phaser.Scene {
                 `${this.keysCollected}/${this.totalKeys}`,
               );
             this.showFloatingText(item.x, item.y - 30, "KEY FOUND!", "#ffd700");
-            this.showKeyCollectedBanner();
           }
         }
       });
@@ -2081,15 +2148,17 @@ export default class GameScene extends Phaser.Scene {
           ? "run"
           : "idle";
 
-    this.debugText.setText(
-      `state:    ${stateStr}\n` +
-        `grounded: ${onGround ? "yes" : "no"}  ladder: ${this.isOnLadder ? "yes" : "no"}\n` +
-        `vel:      x:${String(vx).padStart(5)}  y:${String(vy).padStart(5)}\n` +
-        `pos:      x:${String(px).padStart(5)}  y:${String(py).padStart(5)}\n` +
-        `facing:   ${facing}\n` +
-        `lives:${this.playerLives}  coins:${this.coinCount}  gems:${this.gemCount}  keys:${this.keysCollected}/${this.totalKeys}\n` +
-        `\n[Z] attack  [X] kick  [G] hitboxes`,
-    );
+    if (this.debugVisible) {
+      this.debugText.setText(
+        `state:    ${stateStr}\n` +
+          `grounded: ${onGround ? "yes" : "no"}  ladder: ${this.isOnLadder ? "yes" : "no"}\n` +
+          `vel:      x:${String(vx).padStart(5)}  y:${String(vy).padStart(5)}\n` +
+          `pos:      x:${String(px).padStart(5)}  y:${String(py).padStart(5)}\n` +
+          `facing:   ${facing}\n` +
+          `lives:${this.playerLives}  coins:${this.coinCount}  gems:${this.gemCount}  keys:${this.keysCollected}/${this.totalKeys}\n` +
+          `\n[Z] attack  [X] kick  [G] hitboxes  [\`] debug`,
+      );
+    }
   }
 
   // ── HELPER METHODS ──────────────────────────────────────────────────────────
@@ -2132,7 +2201,7 @@ export default class GameScene extends Phaser.Scene {
     return "terrain";
   }
 
-  showFloatingText(x, y, msg, color) {
+  showFloatingText(x, y, msg, color, duration = 1500) {
     const txt = this.add
       .text(x, y, msg, {
         fontFamily: '"Press Start 2P"',
@@ -2140,6 +2209,7 @@ export default class GameScene extends Phaser.Scene {
         color,
         stroke: "#000000",
         strokeThickness: 3,
+        duration: duration,
       })
       .setOrigin(0.5)
       .setDepth(30);
@@ -2147,7 +2217,7 @@ export default class GameScene extends Phaser.Scene {
       targets: txt,
       y: y - 40,
       alpha: 0,
-      duration: 1500,
+      duration: 4000,
       onComplete: () => {
         txt.destroy();
       },
@@ -2239,12 +2309,29 @@ export default class GameScene extends Phaser.Scene {
     const PX = 640,
       PY = 360;
     const panel = this.add
-      .rectangle(PX, PY, 520, 190, 0x000033, 0.88)
+      .rectangle(PX, PY, 480, 160, 0x000033, 0.88)
       .setScrollFactor(0)
       .setDepth(60);
     const border = this.add.graphics().setScrollFactor(0).setDepth(60);
     border.lineStyle(2, 0xaa88ff, 1);
-    border.strokeRect(PX - 260, PY - 95, 520, 190);
+    border.strokeRect(PX - 240, PY - 80, 480, 160);
+
+    const xBtn = this.add
+      .text(PX + 230, PY - 72, "\u2715", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "13px",
+        color: "#ffd700",
+        stroke: "#ffd700",
+        strokeThickness: 3,
+        resolution: 2,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(62)
+      .setInteractive({ useHandCursor: true });
+
+    xBtn.on("pointerover", () => xBtn.setColor("#ffffff"));
+    xBtn.on("pointerout", () => xBtn.setColor("#ffd700"));
 
     const line1 = this.add
       .text(PX, PY - 52, "\u2736 15 Coins collected!", {
@@ -2271,7 +2358,7 @@ export default class GameScene extends Phaser.Scene {
       .setDepth(61);
 
     const yesBtn = this.add
-      .text(PX - 110, PY + 30, "[ Y \u2014 Convert ]", {
+      .text(PX, PY + 30, "[ Y \u2014 Convert ]", {
         fontFamily: '"Press Start 2P"',
         fontSize: "10px",
         color: "#00ff88",
@@ -2285,23 +2372,8 @@ export default class GameScene extends Phaser.Scene {
       .setDepth(61)
       .setInteractive({ useHandCursor: true });
 
-    const noBtn = this.add
-      .text(PX + 110, PY + 30, "[ N \u2014 Skip ]", {
-        fontFamily: '"Press Start 2P"',
-        fontSize: "10px",
-        color: "#ff6666",
-        stroke: "#000000",
-        strokeThickness: 2,
-        backgroundColor: "#330011",
-        padding: { x: 8, y: 6 },
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(61)
-      .setInteractive({ useHandCursor: true });
-
     const hint = this.add
-      .text(PX, PY + 68, "Press Y or N", {
+      .text(PX, PY + 58, "Press Y or ESC", {
         fontFamily: '"Press Start 2P"',
         fontSize: "8px",
         color: "#aaaaaa",
@@ -2311,15 +2383,17 @@ export default class GameScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(61);
 
-    const elements = [panel, border, line1, line2, yesBtn, noBtn, hint];
+    const elements = [panel, border, xBtn, line1, line2, yesBtn, hint];
 
     const keyY = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Y);
-    const keyN = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.N);
+    const keyEsc = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC,
+    );
 
     const closePopup = () => {
       elements.forEach((e) => e.destroy());
       keyY.destroy();
-      keyN.destroy();
+      keyEsc.destroy();
       this.conversionPopupOpen = false;
       this.player.body.moves = true;
     };
@@ -2336,22 +2410,23 @@ export default class GameScene extends Phaser.Scene {
       this.showReadyPopup();
     };
 
-    const doNo = () => {
+    const doClose = () => {
       closePopup();
-      this.conversionAvailable = false;
-      this.showConversionBanner();
+      this.notifQueue.push({
+        show: (scene) => {
+          scene.showConversionNotifPopup();
+        },
+      });
+      this.setNotifActive(true);
     };
 
+    xBtn.on("pointerdown", () => doClose());
     yesBtn.on("pointerdown", doYes);
-    noBtn.on("pointerdown", doNo);
-
     keyY.once("down", doYes);
-    keyN.once("down", doNo);
+    keyEsc.once("down", () => doClose());
 
     yesBtn.on("pointerover", () => yesBtn.setColor("#ffffff"));
     yesBtn.on("pointerout", () => yesBtn.setColor("#00ff88"));
-    noBtn.on("pointerover", () => noBtn.setColor("#ffffff"));
-    noBtn.on("pointerout", () => noBtn.setColor("#ff6666"));
   }
 
   showReadyPopup() {
@@ -2361,12 +2436,26 @@ export default class GameScene extends Phaser.Scene {
     const PX = 640,
       PY = 360;
     const panel = this.add
-      .rectangle(PX, PY, 420, 160, 0x000033, 0.88)
+      .rectangle(PX, PY, 420, 200, 0x000033, 0.88)
       .setScrollFactor(0)
       .setDepth(60);
     const border = this.add.graphics().setScrollFactor(0).setDepth(60);
     border.lineStyle(2, 0xaa88ff, 1);
-    border.strokeRect(PX - 210, PY - 80, 420, 160);
+    border.strokeRect(PX - 210, PY - 100, 420, 200);
+
+    const xBtn = this.add
+      .text(PX + 198, PY - 90, "\u2715", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "13px",
+        color: "#ffd700",
+        stroke: "#ffd700",
+        strokeThickness: 3,
+        resolution: 2,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(62)
+      .setInteractive({ useHandCursor: true });
 
     const msg = this.add
       .text(PX, PY - 22, "Companion ready\nto operate!", {
@@ -2396,16 +2485,42 @@ export default class GameScene extends Phaser.Scene {
       .setDepth(61)
       .setInteractive({ useHandCursor: true });
 
-    const elements = [panel, border, msg, okBtn];
+    const hint = this.add
+      .text(PX, PY + 80, "Press ESC", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "8px",
+        color: "#aaaaaa",
+        resolution: 2,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(61);
 
-    okBtn.on("pointerdown", () => {
+    const elements = [panel, border, xBtn, msg, okBtn, hint];
+
+    const doClose = () => {
       elements.forEach((e) => e.destroy());
       this.conversionPopupOpen = false;
       this.player.body.moves = true;
       this.companionReady = true;
-      this.showReadyBanner();
-    });
+      this.notifQueue.push({
+        show: (scene) => {
+          scene.showReadyNotifPopup();
+        },
+      });
+      this.setNotifActive(true);
+    };
 
+    const keyEsc = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC,
+    );
+    keyEsc.once("down", () => doClose());
+
+    xBtn.on("pointerdown", () => doClose());
+    xBtn.on("pointerover", () => xBtn.setColor("#ffffff"));
+    xBtn.on("pointerout", () => xBtn.setColor("#ffd700"));
+
+    okBtn.on("pointerdown", () => doClose());
     okBtn.on("pointerover", () => okBtn.setColor("#ffffff"));
     okBtn.on("pointerout", () => okBtn.setColor("#ffd700"));
   }
@@ -2542,6 +2657,7 @@ export default class GameScene extends Phaser.Scene {
       PY + 90,
     );
 
+    
     // ── Footer hint (non-interactive) ──────────────────────────────────────
     this.helpElements.push(
       this.add
@@ -2562,6 +2678,272 @@ export default class GameScene extends Phaser.Scene {
     this.helpPanelOpen = false;
     this.helpElements.forEach((e) => e.destroy());
     this.helpElements = [];
+  }
+
+  // ── Notification system ──────────────────────────────────────────────────
+
+  setNotifActive(active) {
+    if (!this.notifCircleGfx) return;
+    this.notifCircleGfx.clear();
+    if (active) {
+      this.notifCircleGfx.fillStyle(0xdd7700, 1);
+      this.notifCircleGfx.fillCircle(1210, 29, 18);
+    } else {
+      this.notifCircleGfx.fillStyle(0x888888, 1);
+      this.notifCircleGfx.fillCircle(1210, 29, 18);
+    }
+  }
+
+  toggleNotifPanel() {
+    if (this.notifPanelOpen) {
+      this.closeNotifPanel();
+    } else {
+      this.openNotifPanel();
+    }
+  }
+
+  openNotifPanel() {
+    if (this.notifPanelOpen || this.notifQueue.length === 0) return;
+    this.notifPanelOpen = true;
+    const notif = this.notifQueue[0];
+    notif.show(this);
+  }
+
+  closeNotifPanel() {
+    this.notifPanelOpen = false;
+    this.notifPanelElements.forEach((e) => e.destroy());
+    this.notifPanelElements = [];
+    if (this.notifQueue.length === 0) {
+      this.setNotifActive(false);
+    }
+  }
+
+  dismissCurrentNotif() {
+    this.notifQueue.shift();
+    this.closeNotifPanel();
+    if (this.notifQueue.length > 0) {
+      this.setNotifActive(true);
+    } else {
+      this.setNotifActive(false);
+    }
+  }
+
+  showConversionNotifPopup() {
+    this.conversionPopupOpen = true;
+    this.player.body.moves = false;
+
+    const PX = 640,
+      PY = 360;
+    const panel = this.add
+      .rectangle(PX, PY, 480, 160, 0x000033, 0.92)
+      .setScrollFactor(0)
+      .setDepth(60);
+    const border = this.add.graphics().setScrollFactor(0).setDepth(60);
+    border.lineStyle(2, 0xffd700, 1);
+    border.strokeRect(PX - 240, PY - 80, 480, 160);
+
+    const xBtn = this.add
+      .text(PX + 230, PY - 72, "\u2715", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "13px",
+        color: "#ffd700",
+        stroke: "#ffd700",
+        strokeThickness: 3,
+        resolution: 2,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(62)
+      .setInteractive({ useHandCursor: true });
+
+    xBtn.on("pointerover", () => xBtn.setColor("#ffffff"));
+    xBtn.on("pointerout", () => xBtn.setColor("#ffd700"));
+
+    const titleTxt = this.add
+      .text(PX, PY - 52, "\u2736 15 Coins pending!", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "13px",
+        color: "#ffd700",
+        stroke: "#000",
+        strokeThickness: 3,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(61);
+
+    const subTxt = this.add
+      .text(PX, PY - 14, "Convert to Companion Energy?", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "9px",
+        color: "#ffffff",
+        stroke: "#000",
+        strokeThickness: 2,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(61);
+
+    const yesBtn = this.add
+      .text(PX, PY + 22, "[ Y \u2014 Convert ]", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "10px",
+        color: "#00ff88",
+        stroke: "#000",
+        strokeThickness: 2,
+        backgroundColor: "#003311",
+        padding: { x: 8, y: 6 },
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(61)
+      .setInteractive({ useHandCursor: true });
+
+    const hint = this.add
+      .text(PX, PY + 56, "Press Y or ESC", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "8px",
+        color: "#aaaaaa",
+        resolution: 2,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(61);
+
+    const allEls = [panel, border, xBtn, titleTxt, subTxt, yesBtn, hint];
+    this.notifPanelElements = allEls;
+
+    const keyY = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Y);
+    const keyEsc = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC,
+    );
+
+    const closeThis = () => {
+      allEls.forEach((e) => e.destroy());
+      keyY.destroy();
+      keyEsc.destroy();
+      this.conversionPopupOpen = false;
+      this.player.body.moves = true;
+      this.notifPanelOpen = false;
+      this.notifPanelElements = [];
+    };
+
+    const doYes = () => {
+      closeThis();
+      this.dismissCurrentNotif();
+      this.coinCount -= COINS_TO_CONVERT;
+      if (this.hudCoinsText) this.hudCoinsText.setText(String(this.coinCount));
+      this.lastConversionThreshold = Math.floor(
+        this.coinCount / COINS_TO_CONVERT,
+      );
+      this.companionStars = Math.min(3, this.companionStars + 1);
+      this.updateHudStars();
+      this.showReadyPopup();
+    };
+
+    xBtn.on("pointerdown", () => {
+      closeThis();
+    });
+    xBtn.on("pointerover", () => xBtn.setColor("#ffffff"));
+    xBtn.on("pointerout", () => xBtn.setColor("#ffd700"));
+    yesBtn.on("pointerdown", doYes);
+    yesBtn.on("pointerover", () => yesBtn.setColor("#ffffff"));
+    yesBtn.on("pointerout", () => yesBtn.setColor("#00ff88"));
+    keyY.once("down", doYes);
+    keyEsc.once("down", () => {
+      closeThis();
+    });
+  }
+
+  showReadyNotifPopup() {
+    this.notifPanelOpen = true;
+    const PX = 640,
+      PY = 360;
+
+    const panel = this.add
+      .rectangle(PX, PY, 420, 200, 0x000033, 0.92)
+      .setScrollFactor(0)
+      .setDepth(60);
+    const border = this.add.graphics().setScrollFactor(0).setDepth(60);
+    border.lineStyle(2, 0xaa88ff, 1);
+    border.strokeRect(PX - 210, PY - 100, 420, 200);
+
+    const xBtn = this.add
+      .text(PX + 198, PY - 90, "\u2715", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "13px",
+        color: "#ffd700",
+        stroke: "#ffd700",
+        strokeThickness: 3,
+        resolution: 2,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(62)
+      .setInteractive({ useHandCursor: true });
+
+    const msg = this.add
+      .text(PX, PY - 22, "Companion ready\nto operate!", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "13px",
+        color: "#aa88ff",
+        stroke: "#000000",
+        strokeThickness: 3,
+        align: "center",
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(61);
+
+    const okBtn = this.add
+      .text(PX, PY + 44, "[ USE TAB TO SWITCH TO COMPANION ]", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "8px",
+        color: "#ffd700",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#332200",
+        padding: { x: 10, y: 6 },
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(61)
+      .setInteractive({ useHandCursor: true });
+
+    const hint = this.add
+      .text(PX, PY + 80, "Press ESC", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "8px",
+        color: "#aaaaaa",
+        resolution: 2,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(61);
+
+    const allEls = [panel, border, xBtn, msg, okBtn, hint];
+    this.notifPanelElements = allEls;
+
+    const keyEsc = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC,
+    );
+    const keyY = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.Y,
+    );
+
+    const closeThis = () => {
+      allEls.forEach((e) => e.destroy());
+      this.notifPanelOpen = false;
+      this.notifPanelElements = [];
+      keyEsc.destroy();
+      keyY.destroy();
+    };
+
+    keyEsc.once("down", closeThis);
+    keyY.once("down", closeThis);
+
+    xBtn.on("pointerdown", closeThis);
+    xBtn.on("pointerover", () => xBtn.setColor("#ffffff"));
+    xBtn.on("pointerout", () => xBtn.setColor("#ffd700"));
   }
 
   updateHudStars() {
@@ -2599,77 +2981,6 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  showConversionBanner() {
-    this.conversionPending = true;
-    const CW = 1280;
-    const bg = this.add
-      .rectangle(CW / 2, 20, CW, 40, 0x1a0a2e, 0.88)
-      .setScrollFactor(0)
-      .setDepth(30);
-    const txt = this.add
-      .text(12, 20, "\u2736 Convert coins to companion energy?", {
-        fontFamily: '"Press Start 2P"',
-        fontSize: "7px",
-        color: "#f5c875",
-      })
-      .setOrigin(0, 0.5)
-      .setScrollFactor(0)
-      .setDepth(30);
-    const yesBtn = this.add
-      .text(CW - 60, 20, "[ YES ]", {
-        fontFamily: '"Press Start 2P"',
-        fontSize: "7px",
-        color: "#44cc88",
-      })
-      .setOrigin(0.5, 0.5)
-      .setScrollFactor(0)
-      .setDepth(30)
-      .setInteractive({ useHandCursor: true });
-
-    this.conversionBannerObjs = [bg, txt, yesBtn];
-
-    yesBtn.on("pointerover", () => yesBtn.setTint(0xffff99));
-    yesBtn.on("pointerout", () => yesBtn.clearTint());
-    yesBtn.on("pointerdown", () => {
-      this.conversionBannerObjs.forEach((e) => e.destroy());
-      this.conversionBannerObjs = [];
-      this.conversionPending = false;
-      this.coinCount -= COINS_TO_CONVERT;
-      if (this.hudCoinsText) this.hudCoinsText.setText(String(this.coinCount));
-      this.lastConversionThreshold = Math.floor(
-        this.coinCount / COINS_TO_CONVERT,
-      );
-      this.companionStars = Math.min(3, this.companionStars + 1);
-      this.updateHudStars();
-      this.showReadyPopup();
-    });
-  }
-
-  showReadyBanner() {
-    const bannerY = this.conversionPending ? 44 : 0;
-    const CW = 1280;
-    const bg = this.add
-      .rectangle(CW / 2, bannerY + 20, CW, 40, 0x1a0a2e, 0.88)
-      .setScrollFactor(0)
-      .setDepth(30);
-    const txt = this.add
-      .text(
-        12,
-        bannerY + 20,
-        "\u2736 Companion ready!  Press TAB to switch control",
-        {
-          fontFamily: '"Press Start 2P"',
-          fontSize: "7px",
-          color: "#c8aaff",
-        },
-      )
-      .setOrigin(0, 0.5)
-      .setScrollFactor(0)
-      .setDepth(30);
-
-    this.readyBannerObjs = [bg, txt];
-  }
-
   showModeIndicator(name) {
     if (this.modeIndicator) {
       this.modeIndicator.forEach((e) => e.destroy());
@@ -2694,37 +3005,11 @@ export default class GameScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(26);
     this.modeIndicator = [bg, txt];
-    this.time.delayedCall(2500, () => {
+    this.time.delayedCall(6000, () => {
       if (this.modeIndicator) {
         this.modeIndicator.forEach((e) => e.destroy());
         this.modeIndicator = null;
       }
-    });
-  }
-
-  showKeyCollectedBanner() {
-    const CW = 1280;
-    const bg = this.add
-      .rectangle(CW / 2, 20, CW, 40, 0x1a0a2e, 0.92)
-      .setScrollFactor(0)
-      .setDepth(30);
-    const txt = this.add
-      .text(
-        CW / 2,
-        20,
-        "\u2736 Key obtained! Find the lock to unlock the exit.",
-        {
-          fontFamily: '"Press Start 2P"',
-          fontSize: "7px",
-          color: "#ffd700",
-        },
-      )
-      .setOrigin(0.5, 0.5)
-      .setScrollFactor(0)
-      .setDepth(30);
-    this.time.delayedCall(4000, () => {
-      bg.destroy();
-      txt.destroy();
     });
   }
 
@@ -3087,7 +3372,7 @@ export default class GameScene extends Phaser.Scene {
       .setDepth(61);
 
     const unlockBtn = this.add
-      .text(PX, PY + 52, "[ UNLOCK ]", {
+      .text(PX, PY + 52, "[ Y \u2014 UNLOCK ]", {
         fontFamily: '"Press Start 2P"',
         fontSize: "12px",
         color: "#00ff88",
@@ -3103,15 +3388,118 @@ export default class GameScene extends Phaser.Scene {
 
     const elements = [panel, border, msg, unlockBtn];
 
-    unlockBtn.on("pointerdown", () => {
+    const keyY = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Y);
+    const keyEsc = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+
+    const doUnlock = () => {
+      keyY.destroy();
+      keyEsc.destroy();
       elements.forEach((e) => e.destroy());
       this.conversionPopupOpen = false;
       this.player.body.moves = true;
       lockTile.setActive(false).setVisible(false);
       if (lockTile.body) lockTile.body.enable = false;
       this.showMapFragmentPopup();
-    });
+    };
 
+    const doDismiss = () => {
+      keyY.destroy();
+      keyEsc.destroy();
+      elements.forEach((e) => e.destroy());
+      this.conversionPopupOpen = false;
+      this.player.body.moves = true;
+      this.pendingLockTile = lockTile;
+      this.notifQueue.push({ show: (scene) => scene.showLockNotif() });
+      this.setNotifActive(true);
+    };
+
+    keyY.once("down", doUnlock);
+    keyEsc.once("down", doDismiss);
+
+    unlockBtn.on("pointerdown", doUnlock);
+    unlockBtn.on("pointerover", () => unlockBtn.setColor("#ffffff"));
+    unlockBtn.on("pointerout", () => unlockBtn.setColor("#00ff88"));
+  }
+
+  showLockNotif() {
+    this.notifPanelOpen = true;
+    const PX = 640,
+      PY = 360;
+
+    const panel = this.add
+      .rectangle(PX, PY, 480, 180, 0x000033, 0.88)
+      .setScrollFactor(0)
+      .setDepth(60);
+    const border = this.add.graphics().setScrollFactor(0).setDepth(60);
+    border.lineStyle(2, 0xffd700, 1);
+    border.strokeRect(PX - 240, PY - 90, 480, 180);
+
+    const msg = this.add
+      .text(PX, PY - 28, "Map Fragment Found!\nUnlock the exit?", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "13px",
+        color: "#ffd700",
+        stroke: "#000000",
+        strokeThickness: 3,
+        align: "center",
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(61);
+
+    const unlockBtn = this.add
+      .text(PX, PY + 52, "[ Y \u2014 UNLOCK ]", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "12px",
+        color: "#00ff88",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#003311",
+        padding: { x: 12, y: 8 },
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(61)
+      .setInteractive({ useHandCursor: true });
+
+    const allEls = [panel, border, msg, unlockBtn];
+    this.notifPanelElements = allEls;
+
+    const keyEsc = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC,
+    );
+    const keyY = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.Y,
+    );
+
+    // ESC / X — close panel but keep notif in queue (button stays orange)
+    const doClose = () => {
+      keyEsc.destroy();
+      keyY.destroy();
+      this.closeNotifPanel();
+    };
+
+    // Y / click — actually unlock, then dismiss notif from queue
+    const doUnlock = () => {
+      keyEsc.destroy();
+      keyY.destroy();
+      allEls.forEach((e) => e.destroy());
+      this.notifPanelOpen = false;
+      this.notifPanelElements = [];
+      this.dismissCurrentNotif();
+      const tile = this.pendingLockTile;
+      this.pendingLockTile = null;
+      if (tile) {
+        tile.setActive(false).setVisible(false);
+        if (tile.body) tile.body.enable = false;
+      }
+      this.showMapFragmentPopup();
+    };
+
+    keyEsc.once("down", doClose);
+    keyY.once("down", doUnlock);
+
+    unlockBtn.on("pointerdown", doUnlock);
     unlockBtn.on("pointerover", () => unlockBtn.setColor("#ffffff"));
     unlockBtn.on("pointerout", () => unlockBtn.setColor("#00ff88"));
   }
@@ -3199,7 +3587,7 @@ export default class GameScene extends Phaser.Scene {
     elements.push(subText);
 
     const contBtn = this.add
-      .text(PX, PY + 190, "[ CONTINUE ]", {
+      .text(PX, PY + 190, "[ Y \u2014 CONTINUE ]", {
         fontFamily: '"Press Start 2P"',
         fontSize: "12px",
         color: "#ffd700",
@@ -3214,7 +3602,16 @@ export default class GameScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
     elements.push(contBtn);
 
-    contBtn.on("pointerdown", () => {
+    const keyY = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.Y,
+    );
+    const keyEsc = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC,
+    );
+
+    const doClose = () => {
+      keyY.destroy();
+      keyEsc.destroy();
       this.tweens.killTweensOf(glowTarget);
       elements.forEach((e) => e.destroy());
       this.conversionPopupOpen = false;
@@ -3226,13 +3623,106 @@ export default class GameScene extends Phaser.Scene {
         "EXIT UNLOCKED!",
         "#ffd700",
       );
-    });
+      this.notifQueue.push({ show: (scene) => scene.showMapFragmentNotif() });
+      this.setNotifActive(true);
+    };
 
+    keyY.once("down", doClose);
+    keyEsc.once("down", doClose);
+
+    contBtn.on("pointerdown", doClose);
     contBtn.on("pointerover", () => contBtn.setColor("#ffffff"));
     contBtn.on("pointerout", () => contBtn.setColor("#ffd700"));
   }
 
+  showMapFragmentNotif() {
+    this.notifPanelOpen = true;
+    const PX = 640,
+      PY = 360;
+
+    const panel = this.add
+      .rectangle(PX, PY, 480, 180, 0x000033, 0.92)
+      .setScrollFactor(0)
+      .setDepth(60);
+    const border = this.add.graphics().setScrollFactor(0).setDepth(60);
+    border.lineStyle(2, 0xffd700, 1);
+    border.strokeRect(PX - 240, PY - 90, 480, 180);
+
+    const xBtn = this.add
+      .text(PX + 228, PY - 80, "\u2715", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "13px",
+        color: "#ffd700",
+        stroke: "#ffd700",
+        strokeThickness: 3,
+        resolution: 2,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(62)
+      .setInteractive({ useHandCursor: true });
+
+    const msg = this.add
+      .text(PX, PY - 20, "Map Fragment recovered!\nThe exit is now unlocked.", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "11px",
+        color: "#ffd700",
+        stroke: "#000000",
+        strokeThickness: 3,
+        align: "center",
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(61);
+
+    const hint = this.add
+      .text(PX, PY + 68, "Press Y or ESC to close", {
+        fontFamily: '"Press Start 2P"',
+        fontSize: "8px",
+        color: "#aaaaaa",
+        resolution: 2,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(61);
+
+    const allEls = [panel, border, xBtn, msg, hint];
+    this.notifPanelElements = allEls;
+
+    const keyEsc = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC,
+    );
+    const keyY = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.Y,
+    );
+
+    const closeThis = () => {
+      allEls.forEach((e) => e.destroy());
+      this.notifPanelOpen = false;
+      this.notifPanelElements = [];
+      keyEsc.destroy();
+      keyY.destroy();
+      this.dismissCurrentNotif();
+    };
+
+    keyEsc.once("down", closeThis);
+    keyY.once("down", closeThis);
+
+    xBtn.on("pointerdown", closeThis);
+    xBtn.on("pointerover", () => xBtn.setColor("#ffffff"));
+    xBtn.on("pointerout", () => xBtn.setColor("#ffd700"));
+  }
+
   triggerWinSequence() {
+    // Clear notification state before win screen
+    this.notifQueue = [];
+    this.setNotifActive(false);
+    if (this.notifPanelOpen) {
+      this.notifPanelElements.forEach((e) => e.destroy());
+      this.notifPanelElements = [];
+      this.notifPanelOpen = false;
+    }
+
     this.isDead = true; // stops update() input processing
 
     this.player.body.moves = false;
@@ -3250,13 +3740,12 @@ export default class GameScene extends Phaser.Scene {
     this.time.delayedCall(1000, () => {
       flash.destroy();
 
-      // ── Gradient sky background ──
-      const winBg = this.add.graphics().setScrollFactor(0).setDepth(48);
-      winBg.setAlpha(0);
-      winBg.fillGradientStyle(0xc8a4d4, 0xc8a4d4, 0xe8b4c0, 0xe8b4c0, 1);
-      winBg.fillRect(0, 0, 1280, 360);
-      winBg.fillGradientStyle(0xf5c9a0, 0xf5c9a0, 0xd4875a, 0xd4875a, 1);
-      winBg.fillRect(0, 360, 1280, 360);
+      // ── Background image ──
+      const winBg = this.add.image(640, 360, "title_bg")
+        .setDisplaySize(1280, 720)
+        .setScrollFactor(0)
+        .setDepth(48)
+        .setAlpha(0);
       this.tweens.add({ targets: winBg, alpha: 1, duration: 400 });
 
       // ── Star scatter — top of screen ──
@@ -3282,7 +3771,7 @@ export default class GameScene extends Phaser.Scene {
       this.time.delayedCall(400, () => {
         // ── "YOU ESCAPED!" ──
         const winText = this.add
-          .text(640, 160, "YOU ESCAPED!", {
+          .text(640, 160, "FRAGMENT FOUND!", {
             fontFamily: '"Press Start 2P"',
             fontSize: "48px",
             color: "#f5d47a",
@@ -3351,7 +3840,7 @@ export default class GameScene extends Phaser.Scene {
 
         // ── Narrative text — two lines ──
         const line1 = this.add
-          .text(640, 370, "Maevea and Sable made it out.", {
+          .text(640, 370, "Sable glows. Maevea keeps moving", {
             fontFamily: '"Press Start 2P"',
             fontSize: "9px",
             color: "#ffecd8",
@@ -3364,7 +3853,7 @@ export default class GameScene extends Phaser.Scene {
           .setAlpha(0);
 
         const line2 = this.add
-          .text(640, 395, "The Atlas awaits...", {
+          .text(640, 395, "The Atlas stirs awake.", {
             fontFamily: '"Press Start 2P"',
             fontSize: "9px",
             color: "#ffecd8",

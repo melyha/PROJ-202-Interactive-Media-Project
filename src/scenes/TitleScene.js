@@ -3,18 +3,15 @@ export default class TitleScene extends Phaser.Scene {
     super({ key: 'TitleScene' });
   }
 
+  preload() {
+    this.load.image('title_bg', 'assets/backgrounds/title-background.png');
+  }
+
   create() {
-    // ── Gradient sky background ──────────────────────────────────────────────
-    const bg = this.add.graphics();
-    // Top: lavender → rose gold
-    bg.fillGradientStyle(0xc8a4d4, 0xc8a4d4, 0xe8b4c0, 0xe8b4c0, 1);
-    bg.fillRect(0, 0, 1280, 260);
-    // Mid: peach → amber
-    bg.fillGradientStyle(0xf5c9a0, 0xf5c9a0, 0xe8a880, 0xe8a880, 1);
-    bg.fillRect(0, 260, 1280, 260);
-    // Bottom: amber → coral
-    bg.fillGradientStyle(0xe8a880, 0xe8a880, 0xd4875a, 0xd4875a, 1);
-    bg.fillRect(0, 520, 1280, 200);
+    // ── Background image ─────────────────────────────────────────────────────
+    this.add.image(640, 360, 'title_bg')
+      .setDisplaySize(1280, 720)
+      .setDepth(0);
 
     // ── Star scatter — upper sky (y: 0–200) ──────────────────────────────────
     const starGfx = this.add.graphics();
@@ -57,8 +54,10 @@ export default class TitleScene extends Phaser.Scene {
     // ── Subtitle ─────────────────────────────────────────────────────────────
     this.add.text(640, 248, 'A Game by Melyha', {
       fontFamily: '"Press Start 2P"',
-      fontSize: '12px',
+      fontSize: '14px',
       color: '#d4c4e8',
+       stroke: "#8040c0",
+            strokeThickness: 2,
       resolution: 2
     }).setOrigin(0.5);
 
@@ -72,8 +71,10 @@ export default class TitleScene extends Phaser.Scene {
     controls.forEach((line, i) => {
       this.add.text(640, 318 + i * 30, line, {
         fontFamily: '"Press Start 2P"',
-        fontSize: '9px',
+        fontSize: '10px',
         color: '#ffecd8',
+        stroke: "#080808",
+            strokeThickness: 2,
         resolution: 2
       }).setOrigin(0.5);
     });
@@ -86,8 +87,10 @@ export default class TitleScene extends Phaser.Scene {
     tips.forEach((line, i) => {
       this.add.text(640, 448 + i * 24, line, {
         fontFamily: '"Press Start 2P"',
-        fontSize: '8px',
+        fontSize: '10px',
         color: '#e8a880',
+        stroke: "#69300d",
+            strokeThickness: 2,
         resolution: 2
       }).setOrigin(0.5);
     });
@@ -97,6 +100,8 @@ export default class TitleScene extends Phaser.Scene {
       fontFamily: '"Press Start 2P"',
       fontSize: '10px',
       color: '#fac775',
+      stroke: "#74521d",
+            strokeThickness: 2,
       resolution: 2
     }).setOrigin(0.5);
 
