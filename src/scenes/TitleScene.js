@@ -66,17 +66,16 @@ export default class TitleScene extends Phaser.Scene {
 
     // ── Controls ─────────────────────────────────────────────────────────────
     const controls = [
-      'ARROW KEYS / WASD  \u2014  MOVE',
-      'SPACE  \u2014  JUMP',
-      'Z \u2014 ATTACK     X \u2014 KICK',
-      'TAB  \u2014  SWITCH TO COMPANION'
+      'A WORLD ONCE MAPPED IN FULL',
+      'A GIRL WHO WOKE UP IN IT',
+      'A MOTH WHO ALREADY KNEW THE WAY',
     ];
     controls.forEach((line, i) => {
       this.add.text(640, 318 + i * 30, line, {
         fontFamily: '"Press Start 2P"',
         fontSize: '10px',
-        color: '#ffecd8',
-        stroke: "#080808",
+          color: '#e8a880',
+        stroke: "#69300d",
             strokeThickness: 2,
         resolution: 2
       }).setOrigin(0.5);
@@ -84,15 +83,15 @@ export default class TitleScene extends Phaser.Scene {
 
     // ── Tips ─────────────────────────────────────────────────────────────────
     const tips = [
-      'COLLECT 15 COINS  \u2014  POWER SABLE',
-      'LAVA \u00b7 FIRE \u00b7 ENEMIES  \u2014  DAMAGE BOTH'
+      'PRESS H IN GAME FOR CONTROLS',
+      
     ];
     tips.forEach((line, i) => {
       this.add.text(640, 448 + i * 24, line, {
         fontFamily: '"Press Start 2P"',
         fontSize: '10px',
-        color: '#e8a880',
-        stroke: "#69300d",
+         color: '#ffecd8',
+        stroke: "#080808",
             strokeThickness: 2,
         resolution: 2
       }).setOrigin(0.5);
