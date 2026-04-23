@@ -1,5 +1,5 @@
 import { Frog } from "../entities/Enemy.js";
-import SoundManager from "../managers/SoundManager.js";
+import SoundManager, { createSettingsButton } from "../managers/SoundManager.js";
 
 // ── CONSTANTS ───────────────────────────────────────────────────────────────
 const MOVE_SPEED = 250;
@@ -1627,11 +1627,11 @@ export default class GameScene extends Phaser.Scene {
     // ── Help button (? circle, top-right) ───────────────────────────────────
     const helpCircle = this.add.graphics().setScrollFactor(0).setDepth(50);
     helpCircle.fillStyle(0xcc2222, 1);
-    helpCircle.fillCircle(1248, 29, 18);
+    helpCircle.fillCircle(1205, 29, 18);
     helpCircle.lineStyle(2, 0xff8888, 1);
-    helpCircle.strokeCircle(1248, 29, 18);
+    helpCircle.strokeCircle(1205, 29, 18);
     this.add
-      .text(1248, 29, "?", {
+      .text(1205, 29, "?", {
         fontFamily: '"Noto Sans Symbols"',
         fontStyle: "bold",
         fontSize: "18px",
@@ -1667,21 +1667,19 @@ export default class GameScene extends Phaser.Scene {
     // ── Notification button (! circle, top-right) ────────────────────────────
     const notifShadow = this.add.graphics().setScrollFactor(0).setDepth(50);
     notifShadow.fillStyle(0xaa5500, 1);
-    notifShadow.fillCircle(1210, 32, 18);
-  
+    notifShadow.fillCircle(1160, 32, 18);
 
     this.notifCircleGfx = this.add.graphics().setScrollFactor(0).setDepth(51);
     this.notifCircleGfx.fillStyle(0x888888, 1); // grey = no notification
-    this.notifCircleGfx.fillCircle(1210, 29, 18);
-   
+    this.notifCircleGfx.fillCircle(1160, 29, 18);
 
     const notifHighlight = this.add.graphics().setScrollFactor(0).setDepth(52);
     notifHighlight.fillStyle(0xaaaaaa, 0.5);
-    notifHighlight.fillCircle(1205, 24, 9);
+    notifHighlight.fillCircle(1155, 24, 9);
 
 
     this.notifText = this.add
-      .text(1210, 29, "!", {
+      .text(1160, 29, "!", {
         fontFamily: '"Noto Sans Symbols"',
         fontStyle: "bold",
         fontSize: "18px",
@@ -1695,7 +1693,7 @@ export default class GameScene extends Phaser.Scene {
       .setDepth(53);
 
     const notifHitArea = this.add
-      .rectangle(1210, 29, 36, 36)
+      .rectangle(1160, 29, 36, 36)
       .setScrollFactor(0)
       .setDepth(54)
       .setInteractive({ useHandCursor: true })
@@ -1738,30 +1736,9 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // ── Sound ────────────────────────────────────────────────────────────────
-    this.sound_mgr = new SoundManager(this);
-    this.sound_mgr.init();
-
-    const musicBtn = this.add.text(1220, 210, '♪', {
-      fontFamily: '"Press Start 2P"',
-      fontSize: '14px',
-      color: '#fac775',
-    }).setScrollFactor(0).setDepth(30).setInteractive({ useHandCursor: true });
-
-    musicBtn.on('pointerdown', () => {
-      const on = this.sound_mgr.toggleMusic();
-      musicBtn.setColor(on ? '#fac775' : '#555555');
-    });
-
-    const sfxBtn = this.add.text(1248, 210, '◉', {
-      fontFamily: '"Press Start 2P"',
-      fontSize: '14px',
-      color: '#fac775',
-    }).setScrollFactor(0).setDepth(30).setInteractive({ useHandCursor: true });
-
-    sfxBtn.on('pointerdown', () => {
-      const on = this.sound_mgr.toggleSFX();
-      sfxBtn.setColor(on ? '#fac775' : '#555555');
-    });
+    this.sound_mgr = SoundManager.getInstance(this);
+    this.sound_mgr.playGameMusic();
+    createSettingsButton(this, this.sound_mgr, 1252, 29);
   }
 
   // ── UPDATE ─────────────────────────────────────────────────────────────────

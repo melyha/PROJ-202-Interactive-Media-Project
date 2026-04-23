@@ -1,3 +1,5 @@
+import SoundManager, { createSettingsButton } from '../managers/SoundManager.js';
+
 export default class TitleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'TitleScene' });
@@ -5,6 +7,7 @@ export default class TitleScene extends Phaser.Scene {
 
   preload() {
     this.load.image('title_bg', 'assets/backgrounds/title-background.png');
+    SoundManager.preloadAssets(this);
   }
 
   create() {
@@ -109,6 +112,19 @@ export default class TitleScene extends Phaser.Scene {
 
     this.input.keyboard.once('keydown-SPACE', () => this.scene.start('IntroScene'));
     this.input.keyboard.once('keydown-ENTER', () => this.scene.start('IntroScene'));
-    this.input.once('pointerdown', () => this.scene.start('IntroScene'));
+    this.gearClicked = false;
+    this.input.once('pointerdown', () => {
+      if (this.gearClicked) return;
+      this.scene.start('IntroScene');
+    });
+
+    // ── Sound — shared singleton, start menu music ────────────────────────────
+    this.soundManager = SoundManager.getInstance(this);
+    this.soundManager.playMenuMusic();
+    const { gearBtn } = createSettingsButton(this, this.soundManager, 1250, 29);
+    gearBtn.on('pointerdown', () => {
+      this.gearClicked = true;
+      this.time.delayedCall(100, () => { this.gearClicked = false; });
+    });
   }
 }

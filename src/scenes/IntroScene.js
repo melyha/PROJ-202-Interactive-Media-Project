@@ -1,5 +1,11 @@
 // Phaser is global via CDN — do not import it
 
+// FIX 1 — Load Cinzel font from Google Fonts
+const cinzelLink = document.createElement('link');
+cinzelLink.rel = 'stylesheet';
+cinzelLink.href = 'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap';
+document.head.appendChild(cinzelLink);
+
 export default class IntroScene extends Phaser.Scene {
   constructor() {
     super({ key: 'IntroScene' });
@@ -19,11 +25,30 @@ export default class IntroScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor(0x050917);
 
+    // FIX 3 — Generate particle textures once here, before any card runs
+    const gfx1 = this.make.graphics({ add: false });
+    gfx1.fillStyle(0xD6BF99, 1);
+    gfx1.fillCircle(4, 4, 4);
+    gfx1.generateTexture('particle_gold', 8, 8);
+    gfx1.destroy();
+
+    const gfx2 = this.make.graphics({ add: false });
+    gfx2.fillStyle(0xFDDEDC, 1);
+    gfx2.fillCircle(4, 4, 4);
+    gfx2.generateTexture('particle_warm', 8, 8);
+    gfx2.destroy();
+
+    const gfx3 = this.make.graphics({ add: false });
+    gfx3.fillStyle(0xf5d47a, 1);
+    gfx3.fillRect(0, 0, 6, 3);
+    gfx3.generateTexture('particle_fragment', 6, 3);
+    gfx3.destroy();
+
     this.cards = [
       {
         bg: 'intro_card_1',
         dialogueBox: 'dialoguebox1',
-        dialoguePosition: { x: 380, y: 618 },
+        dialoguePosition: { x: 900, y: 638 },   // FIX 2 — moved right
         text: [
           'The world was once mapped in full.',
           'Every garden. Every swamp.',
@@ -125,7 +150,7 @@ export default class IntroScene extends Phaser.Scene {
         card.dialoguePosition.y + offsets[i],
         line,
         {
-          fontFamily: '"Cinzel", "Georgia", serif',
+          fontFamily: '"Cinzel", "Georgia", serif',  // FIX 1
           fontSize: '16px',
           color: '#3a2a10',
           align: 'center',
@@ -186,53 +211,35 @@ export default class IntroScene extends Phaser.Scene {
 
   _applyEffect(effect) {
     if (effect === 'particles_gold') {
-      if (!this.textures.exists('particle_gold')) {
-        const gfx = this.make.graphics({ add: false });
-        gfx.fillStyle(0xD6BF99, 1);
-        gfx.fillCircle(4, 4, 4);
-        gfx.generateTexture('particle_gold', 8, 8);
-        gfx.destroy();
-      }
-
-      this.particleEmitter = this.add.particles(
-        Phaser.Math.Between(0, 1280), 720, 'particle_gold', {
-          x: { min: 0, max: 1280 },
-          y: { start: 750, end: -20 },
-          lifespan: 4000,
-          speed: { min: 20, max: 60 },
-          scale: { start: 0.6, end: 0 },
-          alpha: { start: 0.8, end: 0 },
-          quantity: 1,
-          frequency: 120,
-          blendMode: 'ADD',
-          tint: 0xD6BF99,
-        }
-      ).setDepth(5);
+      // FIX 3 — updated emitter: fills screen area, higher quantity
+      this.particleEmitter = this.add.particles(640, 400, 'particle_gold', {
+        x: { min: 0, max: 1280 },
+        y: { min: 0, max: 720 },
+        lifespan: 3500,
+        speed: { min: 15, max: 45 },
+        scale: { start: 0.8, end: 0 },
+        alpha: { start: 0.9, end: 0 },
+        quantity: 2,
+        frequency: 80,
+        blendMode: 'ADD',
+        tint: 0xD6BF99,
+      }).setDepth(5);
       this.cardElements.push(this.particleEmitter);
 
     } else if (effect === 'particles_warm') {
-      if (!this.textures.exists('particle_warm')) {
-        const gfx = this.make.graphics({ add: false });
-        gfx.fillStyle(0xFDDEDC, 1);
-        gfx.fillCircle(4, 4, 4);
-        gfx.generateTexture('particle_warm', 8, 8);
-        gfx.destroy();
-      }
-
-      this.particleEmitter = this.add.particles(
-        Phaser.Math.Between(0, 1280), 720, 'particle_warm', {
-          x: { min: 0, max: 1280 },
-          y: { start: 750, end: -20 },
-          lifespan: 4000,
-          speed: { min: 20, max: 60 },
-          scale: { start: 0.6, end: 0 },
-          alpha: { start: 0.8, end: 0 },
-          quantity: 1,
-          frequency: 120,
-          blendMode: 'ADD',
-          tint: 0xFDFBCA,
-        }
-      ).setDepth(5);
+      // FIX 3 — updated emitter: fills screen area, higher quantity
+      this.particleEmitter = this.add.particles(640, 400, 'particle_warm', {
+        x: { min: 0, max: 1280 },
+        y: { min: 0, max: 720 },
+        lifespan: 3500,
+        speed: { min: 15, max: 45 },
+        scale: { start: 0.8, end: 0 },
+        alpha: { start: 0.9, end: 0 },
+        quantity: 2,
+        frequency: 80,
+        blendMode: 'ADD',
+        tint: 0xFDFBCA,
+      }).setDepth(5);
       this.cardElements.push(this.particleEmitter);
 
     } else if (effect === 'shatter') {
@@ -251,14 +258,7 @@ export default class IntroScene extends Phaser.Scene {
         repeat: 2,
       });
       this.cardElements.push(flash);
-
-      const vignette = this.add.graphics().setDepth(7).setScrollFactor(0);
-      vignette.fillStyle(0x000000, 0.35);
-      vignette.fillRect(0, 0, 200, 720);
-      vignette.fillRect(1080, 0, 200, 720);
-      vignette.fillRect(0, 0, 1280, 120);
-      vignette.fillRect(0, 600, 1280, 120);
-      this.cardElements.push(vignette);
+      // FIX 4 — vignette removed
 
     } else if (effect === 'shatter_soft') {
       const flash = this.add
@@ -274,31 +274,17 @@ export default class IntroScene extends Phaser.Scene {
         repeat: 1,
       });
       this.cardElements.push(flash);
+      // FIX 4 — vignette removed
 
-      const vignette = this.add.graphics().setDepth(7).setScrollFactor(0);
-      vignette.fillStyle(0x000000, 0.35);
-      vignette.fillRect(0, 0, 200, 720);
-      vignette.fillRect(1080, 0, 200, 720);
-      vignette.fillRect(0, 0, 1280, 120);
-      vignette.fillRect(0, 600, 1280, 120);
-      this.cardElements.push(vignette);
-
-      if (!this.textures.exists('particle_fragment')) {
-        const gfx = this.make.graphics({ add: false });
-        gfx.fillStyle(0xf5d47a, 1);
-        gfx.fillRect(0, 0, 6, 3);
-        gfx.generateTexture('particle_fragment', 6, 3);
-        gfx.destroy();
-      }
-
+      // FIX 4 — increased quantity, frequency, lifespan
       this.particleEmitter = this.add.particles(0, 0, 'particle_fragment', {
         x: { min: 200, max: 1000 },
         y: { min: 100, max: 500 },
         speed: { min: 15, max: 40 },
         angle: { min: -30, max: 210 },
-        lifespan: 2500,
-        quantity: 1,
-        frequency: 200,
+        lifespan: 3200,
+        quantity: 3,
+        frequency: 60,
         scale: { start: 1, end: 0 },
         alpha: { start: 0.6, end: 0 },
         gravityY: 30,
