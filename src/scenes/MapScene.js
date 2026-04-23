@@ -1,4 +1,5 @@
 // Phaser is global via CDN — do not import it
+import { createSettingsButton } from '../managers/SoundManager.js';
 
 export default class MapScene extends Phaser.Scene {
   constructor() {
@@ -469,6 +470,13 @@ export default class MapScene extends Phaser.Scene {
 
         // M key also opens atlas
         this.input.keyboard.on('keydown-M', openAtlas);
+
+        // ── Gear / settings button (top-right) ──
+        const sm = window._enigmaSoundManager;
+        if (sm) {
+          sm.scene = this;
+          createSettingsButton(this, sm, 1250, 30);
+        }
       });
     });
   }
