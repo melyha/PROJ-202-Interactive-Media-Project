@@ -27,7 +27,9 @@
 | I             | Toggle notification panel                 |
 | F1            | Toggle debug overlay                      |
 | G             | Toggle physics hitboxes (debug mode only) |
-| Space         | Retry after game over                     |
+| M             | View Celestial Atlas map (win screen)     |
+| ESC           | Close overlays / skip intro cards         |
+| Space         | Retry after game over / advance intro     |
 
 ---
 
@@ -68,6 +70,7 @@ Enigma is an original browser-based 2D side-scrolling platformer featuring:
 - Invincibility frames after damage (1500ms flash)
 - Last-life warning: blinking heart + red screen vignette
 - Death sequence: fallDown animation, screen shake, overlay, GAME OVER
+- Attack (Z) and kick (X) locked by attackLock flag — simultaneous input bug fixed
 
 ### Sable — Companion
 
@@ -123,6 +126,19 @@ Enigma is an original browser-based 2D side-scrolling platformer featuring:
 5. Press **TAB** to switch control to Sable
 6. Notification button (!) turns grey when no pending actions
 
+ 
+## Win Screen & Celestial Atlas
+ 
+On level completion:
+ 
+- White flash transition → "FRAGMENT FOUND!" win screen
+- Maevea and Sable portrait icons float gently
+- Narrative text: "Sable glows. Maevea keeps moving. The Atlas stirs awake."
+- **[ PLAY AGAIN ]** restarts the level
+- **[ VIEW MAP ]** or press **M** opens the full-screen Celestial Atlas
+- Celestial Atlas shows all six biomes with dashed travel paths
+- Press **ESC** or click ✕ to close the atlas
+
 ### Level Exit Sequence
 
 1. Sable must collect the key
@@ -132,6 +148,8 @@ Enigma is an original browser-based 2D side-scrolling platformer featuring:
 5. Walk through the door → win screen
 
 ---
+
+
 
 ## HUD
 
@@ -145,6 +163,26 @@ Enigma is an original browser-based 2D side-scrolling platformer featuring:
 | Key icon                   | Keys collected / total                                          |
 | **?** button (red)         | Opens How To Play panel (also H key)                            |
 | **!** button (orange/grey) | Notification panel — pending companion/map actions (also I key) |
+
+
+## Sound System
+ 
+Enigma uses a shared `SoundManager` class (`src/managers/SoundManager.js`) that persists across scenes.
+ 
+| Sound file                    | Trigger                                                        |
+| ----------------------------- | -------------------------------------------------------------- |
+| `bitwave-background.ogg`      | Background music loop during gameplay                          |
+| `when-it-rains-background.ogg`| Background music during title and intro screens               |
+| `sfx_coin.ogg`                | Collecting a coin                                              |
+| `sfx_gem.ogg`                 | Collecting a gem                                               |
+| `sfx_hurt.ogg`                | Maevea or Sable taking damage                                  |
+| `sfx_disappear.ogg`           | Character or companion death / game over trigger               |
+| `sfx_bump.ogg`                | Enemy defeated                                                 |
+| `sfx_throw.ogg`               | Attack (Z) or kick (X)                                         |
+| `sfx_jump.ogg`                | Jump                                                           |
+| `sfx_sparkle.ogg`             | Key collected, lockbox unlocked, map fragment found, door exit |
+ 
+The **⚙ gear button** appears top-right on the title screen, game screen, and win screen. Clicking it opens a panel with independent Music and SFX on/off toggles. Sound state persists across scene transitions via a shared global instance.
 
 ---
 
@@ -185,6 +223,11 @@ Sable glows. Maevea follows.
 **Collectibles:** Coins, gems, map fragment  
 **Weapon:** Sword
 
+
+**Intro card illustrations generated using Nano Banana (AI image generation).**  
+**Celestial Atlas world map and dialogue box assets designed in Figma.**
+
+
 ---
 
 ## Stack
@@ -218,7 +261,12 @@ Sable glows. Maevea follows.
 - **Kenney Background Pack** — [kenney.nl](https://kenney.nl) · CC0
 - **Press Start 2P** — Google Fonts · OFL
 - **Noto Sans Symbols** — Google Fonts · OFL
-- **Figma** — UI and map assets
+- **Cinzel** — Google Fonts · OFL
+- **Noto Sans Symbols 2** — Google Fonts · OFL
+- **Intro card illustrations** — AI generated using Nano Banana
+- **Celestial Atlas map, dialogue boxes, UI** — Designed in Figma by me
+- **Background music** — `bitwave-background.ogg`, `when-it-rains-background.ogg`
+
 
 ---
 
