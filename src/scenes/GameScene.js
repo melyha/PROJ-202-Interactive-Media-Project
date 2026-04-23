@@ -1,5 +1,7 @@
 import { Frog } from "../entities/Enemy.js";
-import SoundManager, { createSettingsButton } from "../managers/SoundManager.js";
+import SoundManager, {
+  createSettingsButton,
+} from "../managers/SoundManager.js";
 
 // ── CONSTANTS ───────────────────────────────────────────────────────────────
 const MOVE_SPEED = 250;
@@ -1677,7 +1679,6 @@ export default class GameScene extends Phaser.Scene {
     notifHighlight.fillStyle(0xaaaaaa, 0.5);
     notifHighlight.fillCircle(1155, 24, 9);
 
-
     this.notifText = this.add
       .text(1160, 29, "!", {
         fontFamily: '"Noto Sans Symbols"',
@@ -1724,7 +1725,7 @@ export default class GameScene extends Phaser.Scene {
       .setVisible(false);
 
     // F1 — toggle debug overlay
-    this.input.keyboard.on('keydown-BACKTICK', () => {
+    this.input.keyboard.on("keydown-BACKTICK", () => {
       this.debugVisible = !this.debugVisible;
       this.debugText.setVisible(this.debugVisible);
       if (!this.debugVisible) {
@@ -1780,7 +1781,11 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // ── Companion mode toggle (TAB) ───────────────────────────────────────
-    if (this.companionReady && !this.attackLock && Phaser.Input.Keyboard.JustDown(this.tabKey)) {
+    if (
+      this.companionReady &&
+      !this.attackLock &&
+      Phaser.Input.Keyboard.JustDown(this.tabKey)
+    ) {
       this.companionControlMode = !this.companionControlMode;
 
       if (this.companionControlMode) {
@@ -2567,9 +2572,9 @@ export default class GameScene extends Phaser.Scene {
     // ── Panel ──────────────────────────────────────────────────────────────
     const panel = this.add.graphics().setScrollFactor(0).setDepth(70);
     panel.fillStyle(0x12001c, 0.95);
-    panel.fillRoundedRect(PX - 330, PY - 215, 660, 360, 14);
+    panel.fillRoundedRect(PX - 330, PY - 215, 660, 430, 14);
     panel.lineStyle(2, 0xf5d47a, 1);
-    panel.strokeRoundedRect(PX - 330, PY - 215, 660, 360, 14);
+    panel.strokeRoundedRect(PX - 330, PY - 215, 660, 430, 14);
     this.helpElements.push(panel);
 
     // ── Title ──────────────────────────────────────────────────────────────
@@ -2636,8 +2641,22 @@ export default class GameScene extends Phaser.Scene {
     push("ATTACK", "Z KEY", "#888888", "#ffecd8", PY - 118);
     push("KICK", "X KEY", "#888888", "#ffecd8", PY - 96);
     push("HELP", "H KEY \u2014 THIS PANEL", "#888888", "#888888", PY - 74);
+    push(
+      "NOTIF",
+      "I KEY \u2014 NOTIFICATION PANEL",
+      "#888888",
+      "#888888",
+      PY - 56,
+    );
+    push(
+      "OPTIONS",
+      "O KEY \u2014 SOUND SETTINGS",
+      "#888888",
+      "#888888",
+      PY - 38,
+    );
 
-    sep(PY - 56);
+    sep(PY - 20);
 
     // Characters
     push(
@@ -2645,18 +2664,18 @@ export default class GameScene extends Phaser.Scene {
       "3 HEARTS \u00b7 ENEMIES, WATER, LAVA & FIRE DEAL DAMAGE",
       "#888888",
       "#ffecd8",
-      PY - 44,
+      PY - 16,
     );
     push(
       "SABLE",
       "3 HEARTS \u00b7 LAVA & FIRE DEAL DAMAGE",
       "#888888",
       "#d4c4e8",
-      PY - 22,
+      PY + 16,
     );
     push("SABLE DIES", "TRIGGERS GAME OVER", "#888888", "#ff8888", PY);
 
-    sep(PY + 16);
+    sep(PY + 48);
 
     // Mechanics
     push(
@@ -2664,35 +2683,34 @@ export default class GameScene extends Phaser.Scene {
       "COLLECT 15 COINS \u2192 PRESS Y TO CHARGE SABLE",
       "#888888",
       "#fac775",
-      PY + 30,
+      PY + 66,
     );
     push(
       "TAB KEY",
       "SWITCH BETWEEN MAEVEA \u2194 SABLE",
       "#888888",
       "#aa88ff",
-      PY + 52,
+      PY + 88,
     );
     push(
       "",
       "WASD / ARROWS CONTROL WHOEVER IS ACTIVE",
       "#888888",
       "#aa88ff",
-      PY + 68,
+      PY + 104,
     );
     push(
       "WIN",
       "KEY + MAP FRAGMENT + DOOR = ESCAPE",
       "#888888",
       "#fac775",
-      PY + 90,
+      PY + 126,
     );
 
-    
     // ── Footer hint (non-interactive) ──────────────────────────────────────
     this.helpElements.push(
       this.add
-        .text(PX, PY + 120, "\u2014 PRESS H TO OPEN AND CLOSE THIS \u2014", {
+        .text(PX, PY + 156, "\u2014 PRESS H TO OPEN AND CLOSE THIS \u2014", {
           fontFamily: '"Press Start 2P"',
           fontSize: "8px",
           color: "#d4c4e8",
@@ -2957,9 +2975,7 @@ export default class GameScene extends Phaser.Scene {
     const keyEsc = this.input.keyboard.addKey(
       Phaser.Input.Keyboard.KeyCodes.ESC,
     );
-    const keyY = this.input.keyboard.addKey(
-      Phaser.Input.Keyboard.KeyCodes.Y,
-    );
+    const keyY = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Y);
 
     const closeThis = () => {
       allEls.forEach((e) => e.destroy());
@@ -3425,7 +3441,9 @@ export default class GameScene extends Phaser.Scene {
     const elements = [panel, border, msg, unlockBtn];
 
     const keyY = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Y);
-    const keyEsc = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+    const keyEsc = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC,
+    );
 
     const doUnlock = () => {
       keyY.destroy();
@@ -3436,7 +3454,7 @@ export default class GameScene extends Phaser.Scene {
       lockTile.setActive(false).setVisible(false);
       if (lockTile.body) lockTile.body.enable = false;
       this.sound_mgr.playSparkle();
-      this.scene.launch('MapScene', { mode: 'fragment_popup' });
+      this.scene.launch("MapScene", { mode: "fragment_popup" });
     };
 
     const doDismiss = () => {
@@ -3505,9 +3523,7 @@ export default class GameScene extends Phaser.Scene {
     const keyEsc = this.input.keyboard.addKey(
       Phaser.Input.Keyboard.KeyCodes.ESC,
     );
-    const keyY = this.input.keyboard.addKey(
-      Phaser.Input.Keyboard.KeyCodes.Y,
-    );
+    const keyY = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Y);
 
     // ESC / X — close panel but keep notif in queue (button stays orange)
     const doClose = () => {
@@ -3531,7 +3547,7 @@ export default class GameScene extends Phaser.Scene {
         if (tile.body) tile.body.enable = false;
       }
       this.sound_mgr.playSparkle();
-      this.scene.launch('MapScene', { mode: 'fragment_popup' });
+      this.scene.launch("MapScene", { mode: "fragment_popup" });
     };
 
     keyEsc.once("down", doClose);
@@ -3590,7 +3606,7 @@ export default class GameScene extends Phaser.Scene {
       this.player.body.setVelocity(0, 0);
       this.companionReady = false;
       this.sound_mgr.playSparkle();
-      this.scene.launch('MapScene', { mode: 'win' });
+      this.scene.launch("MapScene", { mode: "win" });
     } else if (this.keysCollected < this.totalKeys) {
       this.showFloatingText(
         door.x,
