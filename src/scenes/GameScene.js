@@ -1,4 +1,5 @@
 import { Frog } from "../entities/Enemy.js";
+import SoundManager from "../managers/SoundManager.js";
 
 // ── CONSTANTS ───────────────────────────────────────────────────────────────
 const MOVE_SPEED = 250;
@@ -71,6 +72,7 @@ export default class GameScene extends Phaser.Scene {
     this.conversionBannerObjs = [];
 
     this.enemies = [];
+    this.sound_mgr = null;
 
     // ── Companion controls ─────────────────────────────────────────────────
     // MODE A (default): player controlled, companion follows
@@ -1205,6 +1207,7 @@ export default class GameScene extends Phaser.Scene {
     // ── Map fragment image — placeholder used if file not present ──────────
     this.load.image("map_fragment_1", "assets/images/map_fragment_1.png");
     this.load.image("title_bg", "assets/backgrounds/title-background.png");
+    SoundManager.preloadAssets(this);
   }
 
   // ── CREATE ─────────────────────────────────────────────────────────────────
@@ -1733,6 +1736,32 @@ export default class GameScene extends Phaser.Scene {
         }
       }
     });
+
+    // ── Sound ────────────────────────────────────────────────────────────────
+    this.sound_mgr = new SoundManager(this);
+    this.sound_mgr.init();
+
+    const musicBtn = this.add.text(1220, 210, '♪', {
+      fontFamily: '"Press Start 2P"',
+      fontSize: '14px',
+      color: '#fac775',
+    }).setScrollFactor(0).setDepth(30).setInteractive({ useHandCursor: true });
+
+    musicBtn.on('pointerdown', () => {
+      const on = this.sound_mgr.toggleMusic();
+      musicBtn.setColor(on ? '#fac775' : '#555555');
+    });
+
+    const sfxBtn = this.add.text(1248, 210, '◉', {
+      fontFamily: '"Press Start 2P"',
+      fontSize: '14px',
+      color: '#fac775',
+    }).setScrollFactor(0).setDepth(30).setInteractive({ useHandCursor: true });
+
+    sfxBtn.on('pointerdown', () => {
+      const on = this.sound_mgr.toggleSFX();
+      sfxBtn.setColor(on ? '#fac775' : '#555555');
+    });
   }
 
   // ── UPDATE ─────────────────────────────────────────────────────────────────
@@ -1881,6 +1910,7 @@ export default class GameScene extends Phaser.Scene {
           this.companionInvincible = true;
           this.companionLives--;
           this.updateCompanionHearts();
+          this.sound_mgr.playHurt();
 
           if (this.companionLives <= 0) {
             this.triggerCompanionDeath();
@@ -1976,6 +2006,7 @@ export default class GameScene extends Phaser.Scene {
         if (stomping) {
           this.player.setVelocityY(-350);
           enemy.takeDamage();
+          this.sound_mgr.playBump();
           this.coinCount++;
           if (this.hudCoinsText)
             this.hudCoinsText.setText(String(this.coinCount));
@@ -1995,6 +2026,7 @@ export default class GameScene extends Phaser.Scene {
         );
         if (attackDist < 80) {
           enemy.takeDamage();
+          this.sound_mgr.playBump();
           this.coinCount++;
           if (this.hudCoinsText)
             this.hudCoinsText.setText(String(this.coinCount));
@@ -2065,12 +2097,14 @@ export default class GameScene extends Phaser.Scene {
           this.attackIsKick = false;
           this.player.anims.play("attack", true);
           this.attackZone.body.enable = true;
+          this.sound_mgr.playThrow();
         } else if (Phaser.Input.Keyboard.JustDown(this.keyK)) {
           // X checks the lock but does not set it — Z owns the lock
           this.attackState = "active";
           this.attackIsKick = true;
           this.player.anims.play("kick", true);
           this.attackZone.body.enable = true;
+          this.sound_mgr.playThrow();
         }
       }
 
@@ -2108,6 +2142,7 @@ export default class GameScene extends Phaser.Scene {
       if (jumpPressed && canJump) {
         this.player.setVelocityY(JUMP_VEL);
         this.coyoteTimer = 0;
+        this.sound_mgr.playJump();
       }
 
       // Animation state (gated — don't override attack/kick)
@@ -3047,6 +3082,7 @@ export default class GameScene extends Phaser.Scene {
   triggerCompanionDeath() {
     if (this.isDead) return;
     this.isDead = true;
+    this.sound_mgr.playDisappear();
 
     // Switch camera back to player and restore player control
     this.companionControlMode = false;
@@ -3125,6 +3161,7 @@ export default class GameScene extends Phaser.Scene {
       });
 
       this.input.keyboard.once("keydown-SPACE", () => {
+        if (this.sound_mgr) this.sound_mgr.stopAll();
         this.scene.restart();
       });
     });
@@ -3134,6 +3171,7 @@ export default class GameScene extends Phaser.Scene {
     if (this.isDead) return;
     this.isDead = true;
     this.levelComplete = true;
+    this.sound_mgr.playDisappear();
 
     this.player.body.setVelocity(0, 0);
     this.player.body.moves = false;
@@ -3194,6 +3232,7 @@ export default class GameScene extends Phaser.Scene {
       });
 
       this.input.keyboard.once("keydown-SPACE", () => {
+        if (this.sound_mgr) this.sound_mgr.stopAll();
         this.scene.restart();
       });
     });
@@ -3204,6 +3243,7 @@ export default class GameScene extends Phaser.Scene {
     this.isInvincible = true;
     this.playerLives--;
     this.updateHudLives();
+    this.sound_mgr.playHurt();
 
     if (this.playerLives <= 0) {
       this.triggerDeathSequence();
@@ -3418,6 +3458,7 @@ export default class GameScene extends Phaser.Scene {
       this.player.body.moves = true;
       lockTile.setActive(false).setVisible(false);
       if (lockTile.body) lockTile.body.enable = false;
+      this.sound_mgr.playSparkle();
       this.scene.launch('MapScene', { mode: 'fragment_popup' });
     };
 
@@ -3512,6 +3553,7 @@ export default class GameScene extends Phaser.Scene {
         tile.setActive(false).setVisible(false);
         if (tile.body) tile.body.enable = false;
       }
+      this.sound_mgr.playSparkle();
       this.scene.launch('MapScene', { mode: 'fragment_popup' });
     };
 
@@ -3544,14 +3586,17 @@ export default class GameScene extends Phaser.Scene {
       this.coinCount++;
       if (this.hudCoinsText) this.hudCoinsText.setText(String(this.coinCount));
       this.checkCoinConversion();
+      this.sound_mgr.playCoin();
     } else if (texKey.startsWith("gem")) {
       this.gemCount++;
       if (this.hudGemsText) this.hudGemsText.setText(String(this.gemCount));
+      this.sound_mgr.playGem();
     } else if (texKey.startsWith("key_")) {
       this.keysCollected++;
       if (this.hudKeysText)
         this.hudKeysText.setText(`${this.keysCollected}/${this.totalKeys}`);
       this.showFloatingText(item.x, item.y - 40, "KEY COLLECTED", "#00ff88");
+      this.sound_mgr.playSparkle();
     }
   }
 
@@ -3567,6 +3612,7 @@ export default class GameScene extends Phaser.Scene {
       this.player.body.moves = false;
       this.player.body.setVelocity(0, 0);
       this.companionReady = false;
+      this.sound_mgr.playSparkle();
       this.scene.launch('MapScene', { mode: 'win' });
     } else if (this.keysCollected < this.totalKeys) {
       this.showFloatingText(
