@@ -162,8 +162,10 @@ On level completion:
 | Coin icon                  | Current coin count                                              |
 | Gem icon                   | Current gem count                                               |
 | Key icon                   | Keys collected / total                                          |
+| **⚙** button (top right)  | Opens sound settings panel — Music and SFX on/off toggles       |
 | **?** button (red)         | Opens How To Play panel (also H key)                            |
 | **!** button (orange/grey) | Notification panel — pending companion/map actions (also I key) |
+
 
 
 ## Sound System
